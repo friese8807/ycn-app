@@ -9,19 +9,46 @@
 <meta name="apple-mobile-web-app-title" content="윤호채원">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#10141b">
-<link rel="apple-touch-icon" href="icon.jpg?v=2">
-<link rel="icon" type="image/jpeg" href="icon.jpg?v=2">
+<link rel="apple-touch-icon" href="icon.jpg?v=3">
+<link rel="icon" type="image/jpeg" href="icon.jpg?v=3">
 <link rel="manifest" href="manifest.webmanifest">
 <style>
-  html, body { margin: 0; height: 100%; background: #10141b; overflow: hidden; }
+  html, body { margin: 0; height: 100%; background: #10141b; color: #e8ecf2; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; }
   body { padding-top: env(safe-area-inset-top, 0px); box-sizing: border-box; }
   iframe { display: block; width: 100%; height: 100%; border: 0; }
+  #wait { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 16px; padding: 24px 16px; text-align: center; background: #10141b; }
+  #wait img { width: 96px; height: 96px; border-radius: 22px; }
+  #wait h1 { margin: 0; font-size: 22px; }
+  #wait p { margin: 0; max-width: 320px; font-size: 15px; line-height: 1.6; color: #b8c0cc; }
+  #wait a { display: none; padding: 14px 28px; border-radius: 14px; background: #3b82f6;
+    color: #fff; text-decoration: none; font-size: 17px; font-weight: 600; }
+  #wait.slow a { display: inline-block; }
+  .gone { display: none !important; }
 </style>
 </head>
 <body>
-<iframe src="https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec"
-        title="윤호, 채원이네" allow="camera; clipboard-write"></iframe>
+<iframe id="app" title="윤호, 채원이네" allow="camera; clipboard-write"
+  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads"
+  src="https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec"></iframe>
+<div id="wait">
+  <img src="icon.jpg?v=3" alt="">
+  <h1>윤호, 채원이네</h1>
+  <p id="msg">여는 중…</p>
+  <a href="https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec">앱 열기</a>
+</div>
 <script>
+/* 앱이 이 페이지 안에서 열리면 앱이 먼저 인사를 보내요. 그때 안내 화면을 치워요.
+   10초 안에 소식이 없으면 '앱 열기' 버튼을 보여줘요. */
+var shown = false;
+function ready() { if (shown) return; shown = true; document.getElementById("wait").className = "gone"; }
+setTimeout(function () {
+  if (shown) return;
+  document.getElementById("wait").className = "slow";
+  document.getElementById("msg").textContent = "앱을 이 화면 안에서 열지 못했어요. 아래 버튼으로 열어 주세요.";
+}, 10000);
+
 /* 로그인 기억: 아이폰은 안쪽 구글 화면의 저장 공간을 앱을 닫을 때 지워요.
    앱이 로그인 정보를 이 페이지에 맡기면 여기 저장해 두었다가, 다음에 열 때 돌려줘요. */
 window.addEventListener("message", function (e) {
@@ -30,6 +57,7 @@ window.addEventListener("message", function (e) {
   if (!/\.googleusercontent\.com$/.test(host)) return;
   var m = e.data;
   if (!m || !m.ycn) return;
+  ready();
   if (m.ycn === "save") { try { localStorage.setItem("ycn-store", JSON.stringify(m.data || {})); } catch (x) {} }
   if (m.ycn === "load") {
     var d = null; try { d = JSON.parse(localStorage.getItem("ycn-store") || "null"); } catch (x) {}
