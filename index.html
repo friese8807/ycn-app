@@ -13,13 +13,41 @@
 <link rel="icon" type="image/jpeg" href="icon.jpg">
 <link rel="manifest" href="manifest.webmanifest">
 <style>
-  html, body { margin: 0; height: 100%; background: #10141b; overflow: hidden; }
-  body { padding-top: env(safe-area-inset-top, 0px); box-sizing: border-box; }
-  iframe { display: block; width: 100%; height: 100%; border: 0; }
+  html, body { margin: 0; height: 100%; background: #10141b; color: #e8ecf2;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; }
+  .wrap { min-height: 100%; box-sizing: border-box; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 18px; padding: 24px 16px; text-align: center; }
+  img { width: 96px; height: 96px; border-radius: 22px; }
+  h1 { margin: 0; font-size: 22px; }
+  .btn { display: inline-block; padding: 14px 28px; border-radius: 14px; background: #3b82f6;
+    color: #fff; text-decoration: none; font-size: 17px; font-weight: 600; }
+  .guide { max-width: 320px; font-size: 15px; line-height: 1.6; color: #b8c0cc; }
+  .guide b { color: #e8ecf2; }
+  .hidden { display: none; }
 </style>
 </head>
 <body>
-<iframe src="https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec"
-        title="윤호, 채원이네" allow="camera; clipboard-write"></iframe>
+<div class="wrap">
+  <img src="icon.jpg" alt="">
+  <h1>윤호, 채원이네</h1>
+  <div id="opening" class="hidden">여는 중…</div>
+  <a id="go" class="btn" href="https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec">앱 열기</a>
+  <div id="guide" class="guide">
+    휴대폰 홈 화면에 넣으려면<br>
+    아이폰 Safari: <b>공유 버튼 → 홈 화면에 추가</b><br>
+    안드로이드 Chrome: <b>메뉴(⋮) → 홈 화면에 추가</b>
+  </div>
+</div>
+<script>
+  // 홈 화면 아이콘으로 열었을 때만 바로 앱으로 넘어갑니다.
+  // Safari에서 그냥 열면 안내를 보여줘서 '홈 화면에 추가'를 할 수 있게 둡니다.
+  var standalone = window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  if (standalone) {
+    document.getElementById('guide').className = 'hidden';
+    document.getElementById('opening').className = '';
+    location.replace(document.getElementById('go').href);
+  }
+</script>
 </body>
 </html>
