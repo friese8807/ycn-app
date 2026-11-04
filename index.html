@@ -13,12 +13,18 @@
 <link rel="icon" type="image/jpeg" href="icon.jpg?v=3">
 <link rel="manifest" href="manifest.webmanifest">
 <style>
-  html, body { margin: 0; height: 100%; background: #10141b; color: #e8ecf2; overflow: hidden;
+  :root { --bg: #10141b; --bar: #171d26; }
+  @media (prefers-color-scheme: light) { :root { --bg: #f3f5f8; --bar: #fdfdfe; } }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: #e8ecf2; overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; }
-  body { padding-top: env(safe-area-inset-top, 0px); box-sizing: border-box; }
-  iframe { display: block; width: 100%; height: 100%; border: 0; }
+  /* 홈 화면 앱에서 height:100%가 상태바만큼 짧게 잡히는 아이폰 문제를 피하려고 화면에 고정해요. */
+  #frame { position: fixed; top: 0; right: 0; bottom: 0; left: 0; display: flex; flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px); }
+  #frame iframe { display: block; flex: 1 1 auto; width: 100%; min-height: 0; border: 0; }
+  /* 홈 바 영역은 앱 탭바와 같은 색으로 칠해서 탭바가 이어져 보이게 해요. */
+  #frame .home { flex: none; height: env(safe-area-inset-bottom, 0px); background: var(--bar); }
   #wait { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 16px; padding: 24px 16px; text-align: center; background: #10141b; }
+    justify-content: center; gap: 16px; padding: 24px 16px; text-align: center; background: var(--bg); }
   #wait img { width: 96px; height: 96px; border-radius: 22px; }
   #wait h1 { margin: 0; font-size: 22px; }
   #wait p { margin: 0; max-width: 320px; font-size: 15px; line-height: 1.6; color: #b8c0cc; }
@@ -29,9 +35,9 @@
 </style>
 </head>
 <body>
-<iframe id="app" title="윤호, 채원이네" allow="camera; clipboard-write"
+<div id="frame"><iframe id="app" title="윤호, 채원이네" allow="camera; clipboard-write"
   sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads"
-  src="https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec"></iframe>
+  src="https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec"></iframe><div class="home"></div></div>
 <div id="wait">
   <img src="icon.jpg?v=3" alt="">
   <h1>윤호, 채원이네</h1>
