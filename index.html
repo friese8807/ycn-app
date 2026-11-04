@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="윤호채원">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#10141b">
 <link rel="apple-touch-icon" href="icon.jpg?v=3">
 <link rel="icon" type="image/jpeg" href="icon.jpg?v=3">
@@ -49,7 +49,7 @@
 var shown = false;
 function sendInsets() {
   var p = document.getElementById("probe"), cs = getComputedStyle(p);
-  var msg = { ycn: "insets", top: parseFloat(cs.height) || 0, bottom: parseFloat(cs.paddingBottom) || 0 };
+  var msg = { ycn: "insets", top: 0, bottom: parseFloat(cs.paddingBottom) || 0 };
   try { document.getElementById("app").contentWindow.postMessage(msg, "*"); } catch (x) {}
 }
 window.addEventListener("resize", sendInsets);
