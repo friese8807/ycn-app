@@ -51,7 +51,8 @@
 var shown = false;
 function sendInsets() {
   var p = document.getElementById("probe"), cs = getComputedStyle(p);
-  var msg = { ycn: "insets", top: parseFloat(cs.height) || 0, bottom: parseFloat(cs.paddingBottom) || 0 };
+  var msg = { ycn: "insets", top: parseFloat(cs.height) || 0, bottom: parseFloat(cs.paddingBottom) || 0,
+    frameH: document.getElementById("app").getBoundingClientRect().height };
   try { document.getElementById("app").contentWindow.postMessage(msg, "*"); } catch (x) {}
 }
 /* 상태바는 투명하지 않게 둬요. 투명 상태바는 아이폰 홈 화면 앱에서 화면 높이와
