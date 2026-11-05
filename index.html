@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="윤호채원">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#10141b">
 <link rel="apple-touch-icon" href="icon.jpg?v=3">
 <link rel="icon" type="image/jpeg" href="icon.jpg?v=3">
@@ -49,10 +49,24 @@
 var shown = false;
 function sendInsets() {
   var p = document.getElementById("probe"), cs = getComputedStyle(p);
-  var msg = { ycn: "insets", top: 0, bottom: parseFloat(cs.paddingBottom) || 0 };
+  var msg = { ycn: "insets", top: parseFloat(cs.height) || 0, bottom: parseFloat(cs.paddingBottom) || 0 };
   try { document.getElementById("app").contentWindow.postMessage(msg, "*"); } catch (x) {}
 }
-window.addEventListener("resize", sendInsets);
+/* 아이폰 홈 화면 앱은 화면 높이를 상태바만큼 짧게 알려줘서 아래에 띠가 생겨요.
+   홈 화면 앱으로 열렸을 때는 실제 화면 높이로 맞춰요. */
+function fit() {
+  var standalone = window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  var f = document.getElementById("app");
+  if (!standalone) { f.style.height = ""; f.style.bottom = ""; return; }
+  var portrait = window.innerHeight >= window.innerWidth;
+  var full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+  f.style.bottom = "auto";
+  f.style.height = Math.max(window.innerHeight, full) + "px";
+}
+fit();
+window.addEventListener("resize", function () { fit(); sendInsets(); });
+window.addEventListener("orientationchange", function () { setTimeout(function () { fit(); sendInsets(); }, 300); });
 function ready() { if (shown) return; shown = true; document.getElementById("wait").className = "gone"; }
 setTimeout(function () {
   if (shown) return;
