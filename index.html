@@ -13,6 +13,15 @@
 <link rel="apple-touch-icon" href="icon.jpg?v=3">
 <link rel="icon" type="image/jpeg" href="icon.jpg?v=3">
 <link rel="manifest" href="manifest.webmanifest">
+<style>
+/* 홈 화면 앱 하단: 탭바 색을 화면 맨 아래 끝까지 칠해서 빈 칸이 보이지 않게 해요. */
+html{background:var(--solid)!important}
+html body{min-height:100vh;min-height:100lvh}
+html body .tabs{background:var(--solid)!important;-webkit-backdrop-filter:none;backdrop-filter:none;
+ padding-bottom:max(6px,calc(var(--sab) - 14px))!important}
+html body .tabs::after{content:"";position:absolute;left:0;right:0;top:100%;height:200px;background:var(--solid)}
+html body{padding-bottom:calc(72px + max(6px,calc(var(--sab) - 14px)))!important}
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
