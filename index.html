@@ -50,25 +50,17 @@
 var shown = false;
 function sendInsets() {
   var p = document.getElementById("probe"), cs = getComputedStyle(p);
-  var f = document.getElementById("app"), gap = Math.max(0, window.innerHeight - f.getBoundingClientRect().bottom);
-  var msg = { ycn: "insets", top: parseFloat(cs.height) || 0, bottom: Math.max(0, (parseFloat(cs.paddingBottom) || 0) - gap) };
+  var msg = { ycn: "insets", top: parseFloat(cs.height) || 0, bottom: isStandalone() ? 0 : (parseFloat(cs.paddingBottom) || 0) };
   try { document.getElementById("app").contentWindow.postMessage(msg, "*"); } catch (x) {}
 }
-/* 아이폰 홈 화면 앱은 화면 높이를 상태바만큼 짧게 알려줘서 아래에 띠가 생겨요.
-   홈 화면 앱으로 열렸을 때는 실제 화면 높이로 맞춰요. */
-function fit() {
-  var standalone = window.navigator.standalone === true ||
+/* 홈 화면 앱으로 열면 아이폰이 맨 아래 칸(홈 바 자리)을 페이지에 내주지 않아요.
+   그 칸은 탭바 색으로 칠해 두었으니, 앱은 홈 바 자리를 따로 비우지 않아요. */
+function isStandalone() {
+  return window.navigator.standalone === true ||
     (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
-  var f = document.getElementById("app");
-  if (!standalone) { f.style.height = ""; f.style.bottom = ""; return; }
-  var portrait = window.innerHeight >= window.innerWidth;
-  var full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-  f.style.bottom = "auto";
-  f.style.height = Math.max(window.innerHeight, full) + "px";
 }
-fit();
-window.addEventListener("resize", function () { fit(); sendInsets(); });
-window.addEventListener("orientationchange", function () { setTimeout(function () { fit(); sendInsets(); }, 300); });
+window.addEventListener("resize", sendInsets);
+window.addEventListener("orientationchange", function () { setTimeout(sendInsets, 300); });
 function ready() { if (shown) return; shown = true; document.getElementById("wait").className = "gone"; }
 setTimeout(function () {
   if (shown) return;
