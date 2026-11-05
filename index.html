@@ -7,8 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="윤호채원">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#10141b">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f3f5f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10141b" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" href="icon.jpg?v=3">
 <link rel="icon" type="image/jpeg" href="icon.jpg?v=3">
 <link rel="manifest" href="manifest.webmanifest">
@@ -50,11 +51,11 @@
 var shown = false;
 function sendInsets() {
   var p = document.getElementById("probe"), cs = getComputedStyle(p);
-  var msg = { ycn: "insets", top: parseFloat(cs.height) || 0, bottom: isStandalone() ? 0 : (parseFloat(cs.paddingBottom) || 0) };
+  var msg = { ycn: "insets", top: parseFloat(cs.height) || 0, bottom: parseFloat(cs.paddingBottom) || 0 };
   try { document.getElementById("app").contentWindow.postMessage(msg, "*"); } catch (x) {}
 }
-/* 홈 화면 앱으로 열면 아이폰이 맨 아래 칸(홈 바 자리)을 페이지에 내주지 않아요.
-   그 칸은 탭바 색으로 칠해 두었으니, 앱은 홈 바 자리를 따로 비우지 않아요. */
+/* 상태바는 투명하지 않게 둬요. 투명 상태바는 아이폰 홈 화면 앱에서 화면 높이와
+   누르는 위치가 상태바만큼 어긋나는 문제가 있어요. */
 function isStandalone() {
   return window.navigator.standalone === true ||
     (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
