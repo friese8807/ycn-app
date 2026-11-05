@@ -14,13 +14,13 @@
 <link rel="icon" type="image/jpeg" href="icon.jpg?v=3">
 <link rel="manifest" href="manifest.webmanifest">
 <style>
-/* 홈 화면 앱 하단: 탭바 색을 화면 맨 아래 끝까지 칠해서 빈 칸이 보이지 않게 해요. */
-html{background:var(--solid)!important}
-html body{min-height:100vh;min-height:100lvh}
-html body .tabs{background:var(--solid)!important;-webkit-backdrop-filter:none;backdrop-filter:none;
+/* 홈 화면 앱: 본문만 안쪽에서 스크롤하고 탭바는 화면 맨 아래에 붙여 둬요. (아이폰에서 탭바가 스크롤 따라 움직이지 않게) */
+html{background:var(--solid)!important;height:100%;overflow:hidden}
+html body{height:100%;overflow:hidden;display:flex;flex-direction:column;padding:0!important}
+#sc{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+ padding:max(4px,var(--sat)) max(16px,env(safe-area-inset-right,0px)) 20px max(16px,env(safe-area-inset-left,0px))}
+html body .tabs{position:relative!important;bottom:auto!important;flex:none;background:var(--solid)!important;-webkit-backdrop-filter:none;backdrop-filter:none;
  padding-bottom:max(6px,calc(var(--sab) - 14px))!important}
-html body .tabs::after{content:"";position:absolute;left:0;right:0;top:100%;height:200px;background:var(--solid)}
-html body{padding-bottom:calc(72px + max(6px,calc(var(--sab) - 14px)))!important}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -215,7 +215,7 @@ padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:c
 </style>
 </head>
 <body>
-<div class="wrap">
+<div id="sc"><div class="wrap">
 <header class="hero" id="hero">
 <svg class="sky" viewBox="0 0 360 150" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
 <defs><pattern id="wp" width="7" height="2.5" patternUnits="userSpaceOnUse"><rect class="wn" x="1.5" y=".5" width="4" height="1.5" rx=".3"/></pattern><pattern id="wp1" width="7" height="2.5" patternUnits="userSpaceOnUse" patternTransform="translate(142.5 0)"><rect class="wn" x="1.5" y=".5" width="4" height="1.5" rx=".3"/></pattern></defs>
@@ -248,6 +248,7 @@ padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:c
 <div class="sum" id="sum"></div>
 <div id="banner" hidden></div>
 <main id="view"></main>
+</div>
 </div>
 </div>
 <nav class="tabs" aria-label="메뉴" hidden><div class="in" role="tablist" id="tabs"></div></nav>
@@ -786,7 +787,7 @@ render(); if(msg) toast(msg); boot();
 }
 function setMode(mode, self){
 S.mode=mode; S.self=mode==="kid"?self:null; if(mode==="kid") S.kid=self;
-S.tab="check"; S.confirm=null; S.editRule=null; remember(); closeSheet(); render(); window.scrollTo(0,0);
+S.tab="check"; S.confirm=null; S.editRule=null; remember(); closeSheet(); render(); document.getElementById("sc").scrollTo(0,0);
 }
 function openHandOver(){
 $("layer").innerHTML = `<div class="scrim" data-close="1"><div class="sheet" role="dialog" aria-label="아이에게 넘겨주기">
@@ -850,7 +851,7 @@ if(d.logout){ logout(); return; }
 if(d.become){ setMode("kid", d.become); return; }
 if(d.switch){ isKid()?backToParent():openHandOver(); return; }
 if(d.kid && b.classList.contains("kidbtn")){ S.kid=d.kid; S.confirm=null; S.editRule=null; remember(); render(); return; }
-if(d.tab){ S.tab=d.tab; S.confirm=null; S.editRule=null; remember(); render(); window.scrollTo(0,0); return; }
+if(d.tab){ S.tab=d.tab; S.confirm=null; S.editRule=null; remember(); render(); document.getElementById("sc").scrollTo(0,0); return; }
 if(b.id==="mPrev"){ S.month=monthAdd(S.month,-1); S.ent={yunho:null,chaewon:null}; render(); refresh(); return; }
 if(b.id==="mNext"){ if(S.month<THIS_MONTH){ S.month=monthAdd(S.month,1); S.ent={yunho:null,chaewon:null}; render(); refresh(); } return; }
 if(d.rule){ const r=(kidCfg()?.rules||[]).find(x=>x.id===d.rule); if(r) openSheet(r); return; }
