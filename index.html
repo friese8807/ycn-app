@@ -13,9 +13,10 @@
 <link rel="icon" type="image/jpeg" href="icon.jpg?v=3">
 <link rel="manifest" href="manifest.webmanifest">
 <style>
-  :root { --bg: #10141b; --bar: #171d26; }
-  @media (prefers-color-scheme: light) { :root { --bg: #f3f5f8; --bar: #fdfdfe; } }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: #e8ecf2; overflow: hidden;
+  :root { --bg: #10141b; --bar: #171d26; --fg: #e8ecf2; --muted: #b8c0cc; }
+  @media (prefers-color-scheme: light) { :root { --bg: #f3f5f8; --bar: #fdfdfe; --fg: #18212f; --muted: #5d6878; } }
+  /* 아이폰이 앱 아래에 남기는 빈 칸은 앱 탭바와 같은 색으로 칠해서 탭바처럼 보이게 해요. */
+  html, body { margin: 0; height: 100%; background: var(--bar); color: var(--fg); overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; }
   /* 앱을 화면 끝까지 꽉 채워요. 상태바·홈 바 높이는 앱에 알려줘서 앱이 알아서 비워요. */
   #app { position: fixed; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; display: block; }
@@ -25,7 +26,7 @@
     justify-content: center; gap: 16px; padding: 24px 16px; text-align: center; background: var(--bg); }
   #wait img { width: 96px; height: 96px; border-radius: 22px; }
   #wait h1 { margin: 0; font-size: 22px; }
-  #wait p { margin: 0; max-width: 320px; font-size: 15px; line-height: 1.6; color: #b8c0cc; }
+  #wait p { margin: 0; max-width: 320px; font-size: 15px; line-height: 1.6; color: var(--muted); }
   #wait a { display: none; padding: 14px 28px; border-radius: 14px; background: #3b82f6;
     color: #fff; text-decoration: none; font-size: 17px; font-weight: 600; }
   #wait.slow a { display: inline-block; }
@@ -49,7 +50,8 @@
 var shown = false;
 function sendInsets() {
   var p = document.getElementById("probe"), cs = getComputedStyle(p);
-  var msg = { ycn: "insets", top: parseFloat(cs.height) || 0, bottom: parseFloat(cs.paddingBottom) || 0 };
+  var f = document.getElementById("app"), gap = Math.max(0, window.innerHeight - f.getBoundingClientRect().bottom);
+  var msg = { ycn: "insets", top: parseFloat(cs.height) || 0, bottom: Math.max(0, (parseFloat(cs.paddingBottom) || 0) - gap) };
   try { document.getElementById("app").contentWindow.postMessage(msg, "*"); } catch (x) {}
 }
 /* 아이폰 홈 화면 앱은 화면 높이를 상태바만큼 짧게 알려줘서 아래에 띠가 생겨요.
