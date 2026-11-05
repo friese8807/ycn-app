@@ -168,7 +168,8 @@ background:linear-gradient(180deg,var(--sky1) 0,var(--sky2) 100%);border:1px sol
 .edrow{display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:8px;padding:10px 14px;border-top:1px solid var(--line)}
 .edrow:first-child{border-top:0}
 .edrow .acts{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.chk{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);min-height:36px}
+input[type=checkbox],input[type=radio]{width:20px;height:20px;margin:0;flex:none;accent-color:var(--kid)}
 .mini{width:64px;flex:none!important}
 
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);
@@ -231,7 +232,7 @@ padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:c
 <rect class="gr" x="0" y="140" width="360" height="10"/>
 <g class="tr"><circle cx="16" cy="138" r="7"/><circle cx="74" cy="137" r="8"/><circle cx="132" cy="138" r="6"/><circle cx="196" cy="137" r="7"/><circle cx="262" cy="138" r="8"/><circle cx="326" cy="137" r="7"/></g>
 </svg>
-<div class="hero-in"><span class="place">힐스테이트 기흥 · v9</span><h1>윤호, 채원이네</h1></div>
+<div class="hero-in"><span class="place">힐스테이트 기흥</span><h1>윤호, 채원이네</h1></div>
 </header>
 <div id="loginArea"></div>
 <div id="mainArea" hidden style="display:flex;flex-direction:column;gap:14px">
@@ -860,7 +861,10 @@ if(d.cancel){ S.confirm=null; render(); return; }
 if(d.approve){ b.disabled=true; await act(call("review",{id:d.approve,decision:"ok"}),"승인했어요"); return; }
 if(d.reject){ const reason=($("rjReason")?.value||"").trim(); b.disabled=true; S.confirm=null; await act(call("review",{id:d.reject,decision:"rejected",reason}),"반려했어요"); return; }
 if(d.del){ b.disabled=true; S.confirm=null; await act(call("deleteEntry",{id:d.del}),"삭제했어요"); return; }
-if(d.pay){ const k=curKid(); const t=totals(k); b.disabled=true;
+if(d.pay){ const k=curKid(); const t=totals(k);
+const lastD=new Date(Number(S.month.slice(0,4)),Number(S.month.slice(5,7)),0).getDate();
+if(S.month===THIS_MONTH && Number(TODAY.slice(8))<lastD && !confirm(`아직 정산일(${Number(S.month.slice(5,7))}월 ${lastD}일) 전이에요.\n지금 ${kidName(k)}에게 ${krw(t.pay)} 지급 완료로 잠글까요?`)) return;
+b.disabled=true;
 await act(call("pay",{kid:k,month:S.month,summary:{base:t.base,plus:t.p,minus:t.m,bonus:t.bo,total:t.pay}}),`${kidName(k)} ${krw(t.pay)} 지급 완료`); return; }
 if(d.unpay){ b.disabled=true; await act(call("unpay",{kid:curKid(),month:S.month}),"지급 취소했어요. 기록이 다시 열렸어요"); return; }
 if(d.savepin){ const inp = d.savepin==="parent"?$("pinInp"):$("kidPinInp"); const v=inp.value.trim();
