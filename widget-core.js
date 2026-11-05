@@ -106,7 +106,7 @@ function kidBlock(parent, r, kid, img, opt) {
   if (opt.detail) {
     box.addSpacer(3);
     txt(box, r.todayN ? `오늘 ${r.todayN}건 기록` : "오늘 기록 없음", 11, r.todayN ? C.ink : C.muted, "m");
-    if (r.last) txt(box, `최근: ${r.last.label} ${r.last.amount > 0 ? "+" : ""}${won(r.last.amount)}${st(r.last) === "pending" ? " (대기)" : ""}`, 10, C.muted, "m");
+    if (r.last) txt(box, `최근 ${r.last.label} ${r.last.amount > 0 ? "+" : ""}${won(r.last.amount)}${st(r.last) === "pending" ? " (대기)" : ""}`, 10, C.muted, "m");
   }
   return box;
 }
@@ -161,7 +161,7 @@ async function build(opts) {
     }
   } else if (family === "medium") {
     const row = w.addStack(); row.spacing = 8;
-    for (const [k, r, img] of rs) kidBlock(row, r, k, img, { av: 24, name: 14, big: rs.length === 1 ? 26 : 19, parent, detail: rs.length === 1 });
+    for (const [k, r, img] of rs) kidBlock(row, r, k, img, { av: 24, name: 14, big: rs.length === 1 ? 26 : 19, parent, detail: true });
   } else {
     for (const [k, r, img] of rs) { kidBlock(w, r, k, img, { av: 30, name: 15, big: 26, parent, detail: true }); w.addSpacer(8); }
     const pend = rs.reduce((a, [, r]) => a + r.wn, 0);
