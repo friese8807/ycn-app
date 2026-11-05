@@ -71,6 +71,14 @@ async function photo(id, auth, S) {
   try { return Image.fromData(Data.fromBase64String(String(d).split(",")[1])); } catch (e) { return null; }
 }
 
+// 배경: 앱 맨 위 아파트 그림 (한 번 받아서 저장해 두고 써요)
+const BG_VER = 1;
+async function bgImage(name, S) {
+  const key = `bg-${name}-v${BG_VER}`; let d = S.get(key);
+  if (!d) { try { const r = new Request(APP + `widget-bg-${name}.png?v=${BG_VER}`); r.timeoutInterval = 15; d = (await r.load()).toBase64String(); S.set(key, d); } catch (e) { return null; } }
+  try { return Image.fromData(Data.fromBase64String(d)); } catch (e) { return null; }
+}
+
 /* ---------- 그리기 ---------- */
 const won = n => (n < 0 ? "−" : "") + Math.abs(Math.round(n)).toLocaleString("ko-KR");
 const krw = n => won(n) + "원";
@@ -85,7 +93,7 @@ function avatar(st, img, kid, size) {
   txt(s, kid.short.slice(0, 1), size * 0.5, "#ffffff", "b");
 }
 function kidBlock(parent, r, kid, img, opt) {
-  const box = parent.addStack(); box.layoutVertically(); box.backgroundColor = new Color(C.card); box.cornerRadius = 14;
+  const box = parent.addStack(); box.layoutVertically(); box.backgroundColor = new Color(C.card, 0.84); box.cornerRadius = 14;
   box.setPadding(8, 10, 8, 10); box.url = APP;
   const top = box.addStack(); top.centerAlignContent(); avatar(top, img, kid, opt.av); top.addSpacer(6);
   txt(top, kid.short, opt.name, C.ink, "b"); top.addSpacer();
@@ -138,6 +146,8 @@ async function build(opts) {
   }
 
   w.backgroundColor = new Color(C.bg); w.setPadding(12, 12, 10, 12);
+  const bgName = family === "small" ? "small" : family === "large" || family === "extraLarge" ? "large" : "medium";
+  const bg = await bgImage(bgName, S); if (bg) w.backgroundImage = bg;
   if (!cur) { txt(w, "윤호, 채원이네", 14, C.ink, "b"); w.addSpacer(6); txt(w, "불러오지 못했어요", 12, C.minus, "m"); const t = w.addText(err.slice(0, 80)); t.font = Font.systemFont(10); t.textColor = new Color(C.muted); return w; }
 
   header(w, cur, family); w.addSpacer(6);
