@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>윤호, 채원이네</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="윤호채원">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f3f5f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10141b" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="icon.jpg?v=3">
+<link rel="icon" type="image/jpeg" href="icon.jpg?v=3">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root { --bg: #10141b; --bar: #10141b; --fg: #e8ecf2; --muted: #b8c0cc; }
+  @media (prefers-color-scheme: light) { :root { --bg: #f3f5f8; --bar: #f3f5f8; --fg: #18212f; --muted: #5d6878; } }
+  /* 아이폰이 앱 아래에 남기는 빈 칸은 앱 탭바와 같은 색으로 칠해서 탭바처럼 보이게 해요. */
+  html, body { margin: 0; height: 100%; background: var(--bar); color: var(--fg); overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; }
+  /* 앱을 화면 끝까지 꽉 채워요. 상태바·홈 바 높이는 앱에 알려줘서 앱이 알아서 비워요. */
+  #app { position: fixed; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; display: block; }
+  #probe { position: fixed; left: 0; top: 0; width: 1px; visibility: hidden; pointer-events: none;
+    height: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  #wait { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 16px; padding: 24px 16px; text-align: center; background: var(--bg); }
+  #wait img { width: 96px; height: 96px; border-radius: 22px; }
+  #wait h1 { margin: 0; font-size: 22px; }
+  #wait p { margin: 0; max-width: 320px; font-size: 15px; line-height: 1.6; color: var(--muted); }
+  #wait a { display: none; padding: 14px 28px; border-radius: 14px; background: #3b82f6;
+    color: #fff; text-decoration: none; font-size: 17px; font-weight: 600; }
+  #wait.slow a { display: inline-block; }
+  .gone { display: none !important; }
+</style>
+</head>
+<body>
+<div id="probe"></div>
+<iframe id="app" title="윤호, 채원이네" allow="camera; clipboard-write"
+  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads"
+  src="https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec"></iframe>
+<div id="wait">
+  <img src="icon.jpg?v=3" alt="">
+  <h1>윤호, 채원이네</h1>
+  <p id="msg">여는 중…</p>
+  <a href="https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec">앱 열기</a>
+</div>
+<script>
+/* 앱이 이 페이지 안에서 열리면 앱이 먼저 인사를 보내요. 그때 안내 화면을 치워요.
+   10초 안에 소식이 없으면 '앱 열기' 버튼을 보여줘요. */
+var shown = false;
+function sendInsets() {
+  var p = document.getElementById("probe"), cs = getComputedStyle(p);
+  var msg = { ycn: "insets", top: parseFloat(cs.height) || 0, bottom: parseFloat(cs.paddingBottom) || 0,
+    frameH: document.getElementById("app").getBoundingClientRect().height };
+  try { document.getElementById("app").contentWindow.postMessage(msg, "*"); } catch (x) {}
+}
+/* 상태바는 투명하지 않게 둬요. 투명 상태바는 아이폰 홈 화면 앱에서 화면 높이와
+   누르는 위치가 상태바만큼 어긋나는 문제가 있어요. */
+function isStandalone() {
+  return window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+}
+window.addEventListener("resize", sendInsets);
+window.addEventListener("orientationchange", function () { setTimeout(sendInsets, 300); });
+function ready() { if (shown) return; shown = true; document.getElementById("wait").className = "gone"; }
+/* 구글 서버가 잠들어 있으면 처음 열 때 10~20초 걸릴 수 있어요. 기다리는 동안 안내만 바꾸고,
+   30초가 지나도 안 열리면 그때 버튼을 보여줘요. 버튼을 보여준 뒤에도 앱이 열리면 바로 앱으로 바뀌어요. */
+setTimeout(function () {
+  if (!shown) document.getElementById("msg").textContent = "조금 오래 걸리고 있어요. 잠시만 기다려 주세요…";
+}, 8000);
+setTimeout(function () {
+  if (shown) return;
+  document.getElementById("wait").className = "slow";
+  document.getElementById("msg").textContent = "앱이 열리지 않으면 아래 버튼을 눌러 주세요.";
+}, 30000);
+
+/* 로그인 기억: 아이폰은 안쪽 구글 화면의 저장 공간을 앱을 닫을 때 지워요.
+   앱이 로그인 정보를 이 페이지에 맡기면 여기 저장해 두었다가, 다음에 열 때 돌려줘요. */
+window.addEventListener("message", function (e) {
+  var host = "";
+  try { host = new URL(e.origin).hostname; } catch (x) { return; }
+  if (!/\.googleusercontent\.com$/.test(host)) return;
+  var m = e.data;
+  if (!m || !m.ycn) return;
+  ready(); sendInsets();
+  if (m.ycn === "save") { try { localStorage.setItem("ycn-store", JSON.stringify(m.data || {})); } catch (x) {} }
+  if (m.ycn === "load") {
+    var d = null; try { d = JSON.parse(localStorage.getItem("ycn-store") || "null"); } catch (x) {}
+    e.source.postMessage({ ycn: "state", data: d }, e.origin);
+  }
+});
+</script>
+</body>
+</html>

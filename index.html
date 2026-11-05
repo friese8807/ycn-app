@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -13,83 +13,941 @@
 <link rel="apple-touch-icon" href="icon.jpg?v=3">
 <link rel="icon" type="image/jpeg" href="icon.jpg?v=3">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
 <style>
-  :root { --bg: #10141b; --bar: #10141b; --fg: #e8ecf2; --muted: #b8c0cc; }
-  @media (prefers-color-scheme: light) { :root { --bg: #f3f5f8; --bar: #f3f5f8; --fg: #18212f; --muted: #5d6878; } }
-  /* 아이폰이 앱 아래에 남기는 빈 칸은 앱 탭바와 같은 색으로 칠해서 탭바처럼 보이게 해요. */
-  html, body { margin: 0; height: 100%; background: var(--bar); color: var(--fg); overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; }
-  /* 앱을 화면 끝까지 꽉 채워요. 상태바·홈 바 높이는 앱에 알려줘서 앱이 알아서 비워요. */
-  #app { position: fixed; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; display: block; }
-  #probe { position: fixed; left: 0; top: 0; width: 1px; visibility: hidden; pointer-events: none;
-    height: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
-  #wait { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 16px; padding: 24px 16px; text-align: center; background: var(--bg); }
-  #wait img { width: 96px; height: 96px; border-radius: 22px; }
-  #wait h1 { margin: 0; font-size: 22px; }
-  #wait p { margin: 0; max-width: 320px; font-size: 15px; line-height: 1.6; color: var(--muted); }
-  #wait a { display: none; padding: 14px 28px; border-radius: 14px; background: #3b82f6;
-    color: #fff; text-decoration: none; font-size: 17px; font-weight: 600; }
-  #wait.slow a { display: inline-block; }
-  .gone { display: none !important; }
+html,body{margin:0}
+html{background:var(--bg)}
+.lockic{margin-left:auto;font-size:11px;font-weight:600;color:var(--muted);background:var(--surface-2);border-radius:999px;padding:2px 8px}
+.who button{justify-content:flex-start!important}
+
+/* Layout: 한 손으로 쓰는 세로 앱. 상단 모드·아이 전환 + 이달 요약, 탭별 본문, 하단 고정 탭바. */
+:root{
+--bg:#f3f5f8; --surface:rgba(255,255,255,.9); --solid:#ffffff; --veil-a:rgba(243,245,248,.05); --veil-b:rgba(243,245,248,.55); --veil-c:rgba(243,245,248,.88); --ily:#b06a1f; --ily-soft:#f8ebdc; --surface-2:#e9edf3; --ink:#18212f; --muted:#5d6878; --line:#d8dee7;
+--plus:#1f8a5b; --plus-soft:#e2f3ea; --minus:#cf3b3b; --minus-soft:#fbe6e4; --wait:#b7791f; --wait-soft:#fbf0dc;
+--yunho:#2f68d8; --yunho-soft:#e3ebfb; --chaewon:#c8458f; --chaewon-soft:#f8e3ef;
+--kid:var(--yunho); --kid-soft:var(--yunho-soft); --on-kid:#ffffff;
+--f-display:"Jua","IBM Plex Sans KR",system-ui,sans-serif;
+--f-body:"IBM Plex Sans KR",-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;
+--r:14px;
+--sky1:#bcd8f0; --sky2:#e9f1f8; --tw1:#8fa3bb; --tw2:#a9b9cc; --tw3:#c3cfdc; --win:rgba(255,255,255,.55); --lit:#ffcf6e; --water:#a7c4dc; --ridge:#9fb7a6; --shade-top:rgba(233,241,248,.85); --shade-bot:rgba(243,245,248,.35);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+--bg:#10141b; --surface:rgba(25,32,42,.88); --solid:#19202a; --veil-a:rgba(16,20,27,.35); --veil-b:rgba(16,20,27,.72); --veil-c:rgba(16,20,27,.92); --ily:#e6a35c; --ily-soft:#3a2a18; --surface-2:#232b37; --ink:#e9edf3; --muted:#9aa5b5; --line:#2e3846;
+--plus:#4cc28b; --plus-soft:#173426; --minus:#f07373; --minus-soft:#3a1d1f; --wait:#e6b45a; --wait-soft:#3a2e17;
+--yunho:#6c9cf5; --yunho-soft:#1b2a47; --chaewon:#ee7fbe; --chaewon-soft:#40203a; --on-kid:#10141b; --sky1:#0b1430; --sky2:#1d2b4d; --tw1:#25314a; --tw2:#2f3c58; --tw3:#3a4866; --win:rgba(150,170,210,.18); --lit:#ffc65c; --water:#14203a; --ridge:#1d2a3c; --shade-top:rgba(16,20,27,.8); --shade-bot:rgba(16,20,27,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+--bg:#10141b; --surface:rgba(25,32,42,.88); --solid:#19202a; --veil-a:rgba(16,20,27,.35); --veil-b:rgba(16,20,27,.72); --veil-c:rgba(16,20,27,.92); --ily:#e6a35c; --ily-soft:#3a2a18; --surface-2:#232b37; --ink:#e9edf3; --muted:#9aa5b5; --line:#2e3846;
+--plus:#4cc28b; --plus-soft:#173426; --minus:#f07373; --minus-soft:#3a1d1f; --wait:#e6b45a; --wait-soft:#3a2e17;
+--yunho:#6c9cf5; --yunho-soft:#1b2a47; --chaewon:#ee7fbe; --chaewon-soft:#40203a; --on-kid:#10141b; --sky1:#0b1430; --sky2:#1d2b4d; --tw1:#25314a; --tw2:#2f3c58; --tw3:#3a4866; --win:rgba(150,170,210,.18); --lit:#ffc65c; --water:#14203a; --ridge:#1d2a3c; --shade-top:rgba(16,20,27,.8); --shade-bot:rgba(16,20,27,.5); color-scheme:dark}
+body.k-chaewon{--kid:var(--chaewon); --kid-soft:var(--chaewon-soft)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+padding-block:max(4px,env(safe-area-inset-top,0px)) calc(72px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--kid);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+h1{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0;letter-spacing:.01em}
+h2{font-size:13px;font-weight:600;color:var(--muted);margin:0;letter-spacing:.04em;text-align:center}
+
+.top{display:flex;align-items:center;justify-content:center}
+.bgphoto{position:fixed;inset:0;z-index:-1;pointer-events:none}
+.bgphoto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%}
+.bgphoto::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,var(--veil-a) 0,var(--veil-b) 220px,var(--veil-c) 420px,var(--veil-c) 100%)}
+.card,.sum,.rule,.kidbtn,.month,.chip,.banner,.tabs{-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.sheet{background:var(--solid)!important}
+.bgphoto{display:none!important}
+body{background:linear-gradient(180deg,var(--sky2) 0,var(--bg) 360px) no-repeat,var(--bg)}
+.hero{position:relative;height:236px;display:flex;align-items:flex-start;justify-content:center;border-radius:22px;overflow:hidden;
+background:linear-gradient(180deg,var(--sky1) 0,var(--sky2) 100%);border:1px solid var(--line)}
+.hero .sky{position:absolute;left:0;bottom:0;width:100%;height:150px;display:block}
+.hero{background-image:none;background-color:var(--sky1)!important;background:linear-gradient(180deg,var(--sky1) 0,var(--sky2) 100%)!important;isolation:isolate}
+.hero img{display:none!important}
+.sky .tag{fill:var(--lit)} .sky .tagt{fill:#1b1f27;font:700 6px var(--f-body)}
+.sky .t1{fill:var(--tw1)} .sky .t2{fill:var(--tw2)} .sky .t3{fill:var(--tw3)} .sky .wn{fill:var(--win)}
+.sky .lit{fill:var(--lit)} .sky .glow{fill:var(--lit);opacity:.35} .sky .rd{fill:var(--ridge)} .sky .gr{fill:var(--ridge);opacity:.75}
+.sky .tr{fill:var(--plus);opacity:.55} .sky .cl{fill:#fff;opacity:.6} .sky .sun{fill:var(--lit);opacity:.85} .sky .lb{fill:var(--ink);opacity:.75;font:700 5.5px var(--f-body)}
+.hero-in{position:relative;text-align:center;padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.hero .place{font-size:12px;font-weight:600;letter-spacing:.12em;color:var(--ink);opacity:.7}
+.hero h1{font-size:34px;text-shadow:0 0 10px var(--sky2),0 0 3px var(--sky2)}
+.month{display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px}
+.month button{border:0;background:none;width:34px;height:34px;border-radius:50%;font-size:18px;color:var(--muted)}
+.month button:disabled{opacity:.3;cursor:default}
+.month span{font-weight:600;min-width:92px;text-align:center}
+.modebar{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;font-size:13px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--kid);display:inline-block}
+.kids{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kidbtn{border:2px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px;display:flex;align-items:center;gap:10px;text-align:left;position:relative;justify-content:center}
+.av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-size:17px;color:#fff;flex:none}
+.av img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.ilyh{display:flex;align-items:center;justify-content:center;gap:8px}
+.ilyh img{width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
+.av.yunho{background:var(--yunho)} .av.chaewon{background:var(--chaewon)}
+.kidbtn b{display:block;font-size:15px}
+.kidbtn small{color:var(--muted);font-size:12px}
+.kidbtn[aria-pressed="true"][data-kid="yunho"]{border-color:var(--yunho);background:var(--yunho-soft)}
+.kidbtn[aria-pressed="true"][data-kid="chaewon"]{border-color:var(--chaewon);background:var(--chaewon-soft)}
+.badge{position:absolute;top:-6px;right:-6px;background:var(--wait);color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 6px}
+
+.sum{background:var(--surface);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;align-items:center;gap:8px;border:1px solid var(--line);text-align:center}
+.sum .big{font-family:var(--f-display);font-size:34px;line-height:1.05;color:var(--kid)}
+.sum .lbl{font-size:12px;color:var(--muted)}
+.sum .parts{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;font-size:13px}
+.plus{color:var(--plus)} .minus{color:var(--minus)} .waitc{color:var(--wait)}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted);vertical-align:1px}
+.pill.paid,.pill.ok{background:var(--plus-soft);color:var(--plus)}
+.pill.wait{background:var(--wait-soft);color:var(--wait)}
+.pill.no{background:var(--minus-soft);color:var(--minus)}
+
+.group{display:flex;flex-direction:column;gap:8px}
+.stack{display:flex;flex-direction:column;gap:18px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.rule{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:14px 18px 12px;box-shadow:0 1px 2px rgba(20,30,50,.06),0 4px 12px rgba(20,30,50,.05);text-align:center;align-items:center;justify-content:center;display:flex;flex-direction:column;gap:4px;min-height:72px;position:relative}
+.rule .t{font-weight:600;line-height:1.3;word-break:keep-all}
+.rule .a{font-weight:700;font-size:13px;padding:1px 10px;border-radius:999px}
+.rule .ic{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;margin-bottom:4px}
+.rule .ic svg{width:24px;height:24px}
+.rule.p .ic{background:var(--plus-soft);color:var(--plus)} .rule.m .ic{background:var(--minus-soft);color:var(--minus)} .rule.d .ic{background:var(--ily-soft);color:var(--ily)}
+.rule.p .a{background:var(--plus-soft)} .rule.m .a{background:var(--minus-soft)} .rule.d.p .a{background:var(--ily-soft);color:var(--ily)}
+.rule.p{border-bottom:3px solid var(--plus)} .rule.m{border-bottom:3px solid var(--minus)} .rule.d.p{border-bottom-color:var(--ily)}
+.rule .lim{font-size:12px;color:var(--muted)}
+.rule.p .a{color:var(--plus)} .rule.m .a{color:var(--minus)}
+.rule .cnt{position:absolute;top:8px;right:8px;font-size:11px;font-weight:700;min-width:20px;height:20px;padding:0 6px;border-radius:10px;display:grid;place-items:center}
+.rule.p .cnt{background:var(--plus-soft);color:var(--plus)} .rule.m .cnt{background:var(--minus-soft);color:var(--minus)}
+.rule:active{transform:scale(.98)}
+.rule:disabled{opacity:.45;cursor:default}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.card.wait{border-color:var(--wait)}
+.day{text-align:center;padding:8px 14px;font-size:12px;font-weight:600;color:var(--muted);background:var(--surface-2)}
+.row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.day + .row,.row:first-child{border-top:0}
+.row .main{flex:1;min-width:0}
+.row .main b{font-weight:600}
+.row .sub{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.row .amt{font-weight:700;white-space:nowrap}
+.row.dim .main b,.row.dim .amt{text-decoration:line-through;opacity:.6}
+.row .acts{display:flex;gap:6px;width:100%;justify-content:flex-end;flex-wrap:wrap}
+.thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:none;background:var(--surface-2);border:0;padding:0;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.ib{border:0;background:var(--surface-2);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--muted);font-weight:600}
+.ib.danger{background:var(--minus-soft);color:var(--minus)}
+.ib.good{background:var(--plus-soft);color:var(--plus)}
+.ib.solid{background:var(--kid);color:var(--on-kid)}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+
+.srow{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-top:1px solid var(--line)}
+.srow:first-child{border-top:0}
+.srow.total{background:var(--kid-soft);font-weight:700;font-size:17px}
+.srow .x{color:var(--muted);font-size:13px}
+.btn{border:0;border-radius:12px;padding:13px 16px;font-weight:700;background:var(--kid);color:var(--on-kid);width:100%}
+.btn.ghost{background:var(--surface-2);color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:default}
+.note{font-size:13px;color:var(--muted);margin:0;text-align:center}
+
+.field{display:flex;flex-direction:column;gap:4px}
+.field > label{font-size:13px;color:var(--muted);text-align:center}
+.inp{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+.inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+.inline .inp{flex:1}
+.edrow{display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:8px;padding:10px 14px;border-top:1px solid var(--line)}
+.edrow:first-child{border-top:0}
+.edrow .acts{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.mini{width:64px;flex:none!important}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);
+padding:6px max(16px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px}
+.tabs button{border:0;background:none;padding:8px 0;border-radius:10px;font-size:13px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabs button svg{width:22px;height:22px}
+.tabs button[aria-selected="true"]{color:var(--kid);background:var(--kid-soft)}
+
+.scrim{position:fixed;inset:0;background:rgba(10,14,20,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;border-radius:18px 18px 0 0;
+padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+display:flex;flex-direction:column;gap:12px;max-height:90vh;overflow:auto}
+.sheet .head{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.sheet .head b{font-size:18px}
+.cam{border:2px dashed var(--line);border-radius:14px;background:var(--surface-2);min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-weight:600;text-align:center;padding:12px;cursor:pointer;overflow:hidden}
+.cam svg{width:36px;height:36px}
+.cam img{max-height:240px;border-radius:10px}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.checks li{display:flex;gap:8px;align-items:flex-start}
+.checks .ic{width:20px;height:20px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--muted);margin-top:1px}
+.checks .y .ic{background:var(--plus-soft);color:var(--plus)}
+.checks .n .ic{background:var(--minus-soft);color:var(--minus)}
+.checks .n{color:var(--minus)}
+.who{display:grid;gap:10px}
+.who button{display:flex;align-items:center;justify-content:center;gap:12px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:14px;text-align:left;font-size:16px;font-weight:600}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);
+padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:calc(100% - 32px);text-align:center}
+.viewer{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:16px}
+.viewer img{max-height:100%;border-radius:10px}
+.banner{background:var(--surface-2);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--muted);text-align:center}
+.banner.wait{background:var(--wait-soft);color:var(--wait);font-weight:600}
+@media (prefers-reduced-motion:reduce){.rule:active{transform:none}}
+.grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.rule{padding:10px 4px 8px;min-height:0;border-radius:12px;gap:2px}
+.rule .ic{width:34px;height:34px;margin-bottom:2px}
+.rule .ic svg{width:18px;height:18px}
+.rule .t{font-size:13px;line-height:1.25}
+.rule .a{font-size:11.5px;padding:0 7px}
+.rule .lim{font-size:11px}
+.rule .cnt{top:4px;right:4px;min-width:18px;height:18px;font-size:10.5px;padding:0 5px}
+@media (min-width:520px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
 </head>
 <body>
-<div id="probe"></div>
-<iframe id="app" title="윤호, 채원이네" allow="camera; clipboard-write"
-  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads"
-  src="https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec"></iframe>
-<div id="wait">
-  <img src="icon.jpg?v=3" alt="">
-  <h1>윤호, 채원이네</h1>
-  <p id="msg">여는 중…</p>
-  <a href="https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec">앱 열기</a>
+<div class="wrap">
+<header class="hero" id="hero">
+<svg class="sky" viewBox="0 0 360 150" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+<defs><pattern id="wp" width="7" height="2.5" patternUnits="userSpaceOnUse"><rect class="wn" x="1.5" y=".5" width="4" height="1.5" rx=".3"/></pattern><pattern id="wp1" width="7" height="2.5" patternUnits="userSpaceOnUse" patternTransform="translate(142.5 0)"><rect class="wn" x="1.5" y=".5" width="4" height="1.5" rx=".3"/></pattern></defs>
+<circle class="sun" cx="322" cy="48" r="9"/>
+<ellipse class="cl" cx="48" cy="40" rx="18" ry="5"/><ellipse class="cl" cx="62" cy="36" rx="10" ry="5"/><ellipse class="cl" cx="270" cy="50" rx="15" ry="4.5"/>
+<path class="rd" d="M0 112 Q40 92 80 104 T170 98 T260 102 T360 94 V150 H0z" opacity=".45"/>
+<g class="t3"><rect x="6" y="70" width="30" height="72"/><rect x="58" y="58" width="28" height="84"/><rect x="250" y="62" width="28" height="80"/><rect x="304" y="72" width="34" height="70"/><rect x="342" y="80" width="22" height="62"/></g>
+<g class="t2"><rect x="30" y="46" width="34" height="96"/><rect x="214" y="40" width="36" height="102"/><rect x="276" y="52" width="32" height="90"/></g>
+<rect x="34" y="50" width="26" height="90" fill="url(#wp)"/><rect x="218" y="44" width="28" height="96" fill="url(#wp)"/><rect x="280" y="56" width="24" height="84" fill="url(#wp)"/>
+<g class="t1"><rect x="84" y="30" width="44" height="112"/><rect x="88" y="24" width="36" height="8"/><rect x="138" y="14" width="50" height="128"/><rect x="143" y="7" width="40" height="9"/><rect x="198" y="34" width="42" height="108" class="t2"/></g>
+<rect x="88" y="34" width="36" height="104" fill="url(#wp)"/><rect x="142.5" y="22.5" width="42" height="117.5" fill="url(#wp1)"/>
+<circle class="glow" cx="160" cy="78.75" r="5"/><rect class="lit" x="158" y="78" width="4" height="1.5" rx=".3"/><rect class="tag" x="106" y="74.5" width="28" height="8.5" rx="4.25"/><text class="tagt" x="120" y="80.9" text-anchor="middle">25층</text><path class="tag" d="M134 77.5 L138 78.75 L134 80z"/>
+<text class="lb" x="163.5" y="20.5" text-anchor="middle">201동 · 47층</text>
+<rect class="gr" x="0" y="140" width="360" height="10"/>
+<g class="tr"><circle cx="16" cy="138" r="7"/><circle cx="74" cy="137" r="8"/><circle cx="132" cy="138" r="6"/><circle cx="196" cy="137" r="7"/><circle cx="262" cy="138" r="8"/><circle cx="326" cy="137" r="7"/></g>
+</svg>
+<div class="hero-in"><span class="place">힐스테이트 기흥 · v9</span><h1>윤호, 채원이네</h1></div>
+</header>
+<div id="loginArea"></div>
+<div id="mainArea" hidden style="display:flex;flex-direction:column;gap:14px">
+<div class="top">
+<div class="month" aria-label="월 선택">
+<button id="mPrev" aria-label="이전 달">‹</button>
+<span id="mLabel" class="num"></span>
+<button id="mNext" aria-label="다음 달">›</button>
 </div>
+</div>
+<div class="modebar" id="modebar"></div>
+<div class="kids" id="kids"></div>
+<div class="sum" id="sum"></div>
+<div id="banner" hidden></div>
+<main id="view"></main>
+</div>
+</div>
+<nav class="tabs" aria-label="메뉴" hidden><div class="in" role="tablist" id="tabs"></div></nav>
+<div id="layer"></div>
 <script>
-/* 앱이 이 페이지 안에서 열리면 앱이 먼저 인사를 보내요. 그때 안내 화면을 치워요.
-   10초 안에 소식이 없으면 '앱 열기' 버튼을 보여줘요. */
-var shown = false;
-function sendInsets() {
-  var p = document.getElementById("probe"), cs = getComputedStyle(p);
-  var msg = { ycn: "insets", top: parseFloat(cs.height) || 0, bottom: parseFloat(cs.paddingBottom) || 0,
-    frameH: document.getElementById("app").getBoundingClientRect().height };
-  try { document.getElementById("app").contentWindow.postMessage(msg, "*"); } catch (x) {}
-}
-/* 상태바는 투명하지 않게 둬요. 투명 상태바는 아이폰 홈 화면 앱에서 화면 높이와
-   누르는 위치가 상태바만큼 어긋나는 문제가 있어요. */
-function isStandalone() {
-  return window.navigator.standalone === true ||
-    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
-}
-window.addEventListener("resize", sendInsets);
-window.addEventListener("orientationchange", function () { setTimeout(sendInsets, 300); });
-function ready() { if (shown) return; shown = true; document.getElementById("wait").className = "gone"; }
-/* 구글 서버가 잠들어 있으면 처음 열 때 10~20초 걸릴 수 있어요. 기다리는 동안 안내만 바꾸고,
-   30초가 지나도 안 열리면 그때 버튼을 보여줘요. 버튼을 보여준 뒤에도 앱이 열리면 바로 앱으로 바뀌어요. */
-setTimeout(function () {
-  if (!shown) document.getElementById("msg").textContent = "조금 오래 걸리고 있어요. 잠시만 기다려 주세요…";
-}, 8000);
-setTimeout(function () {
-  if (shown) return;
-  document.getElementById("wait").className = "slow";
-  document.getElementById("msg").textContent = "앱이 열리지 않으면 아래 버튼을 눌러 주세요.";
-}, 30000);
+window.addEventListener("error",function(e){var el=document.getElementById("loginArea");if(el){el.hidden=false;el.innerHTML='<div class="card empty">앱 오류: '+String(e.message||"알 수 없음").replace(/</g,"&lt;")+' (줄 '+(e.lineno||"?")+')<br>이 화면을 캡처해서 보내주세요.</div>';}});
+</script>
+<script>
+(() => {
+const KIDS = [{id:"yunho",name:"서윤호",short:"윤호"},{id:"chaewon",name:"서채원",short:"채원"}];
+const PARENTS = ["아빠","엄마"];
+const DEFAULT_IMG = {};
+const FRESH_MIN = 10;
+const pad = n => String(n).padStart(2,"0");
+const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+let TODAY = ymd(new Date());
+let THIS_MONTH = TODAY.slice(0,7);
+const won = n => (n>0?"+":n<0?"−":"")+Math.abs(n).toLocaleString("ko-KR");
+const krw = n => (n<0?"−":"")+Math.abs(n).toLocaleString("ko-KR")+"원";
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = id => document.getElementById(id);
+const WD = ["일","월","화","수","목","금","토"];
 
-/* 로그인 기억: 아이폰은 안쪽 구글 화면의 저장 공간을 앱을 닫을 때 지워요.
-   앱이 로그인 정보를 이 페이지에 맡기면 여기 저장해 두었다가, 다음에 열 때 돌려줘요. */
-window.addEventListener("message", function (e) {
-  var host = "";
-  try { host = new URL(e.origin).hostname; } catch (x) { return; }
-  if (!/\.googleusercontent\.com$/.test(host)) return;
-  var m = e.data;
-  if (!m || !m.ycn) return;
-  ready(); sendInsets();
-  if (m.ycn === "save") { try { localStorage.setItem("ycn-store", JSON.stringify(m.data || {})); } catch (x) {} }
-  if (m.ycn === "load") {
-    var d = null; try { d = JSON.parse(localStorage.getItem("ycn-store") || "null"); } catch (x) {}
-    e.source.postMessage({ ycn: "state", data: d }, e.origin);
-  }
+const ICON = {
+check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>',
+cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+log:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>',
+settle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M7 15h3"/></svg>',
+setup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>'
+};
+
+/* ---------- local state ---------- */
+const LS = {
+get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } },
+set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+/* iPhone은 다른 사이트 안에 들어간 화면의 저장소를 앱을 닫을 때 지워요.
+   그래서 로그인 정보를 바깥 페이지(github.io)에도 맡기고, 다음에 열 때 돌려받아요. */
+const TOP_ORIGINS = ["https://friese8807.github.io"];
+let topOrigin = null;
+try{ const ao=location.ancestorOrigins; if(ao&&ao.length){ const o=ao[ao.length-1]; if(TOP_ORIGINS.includes(o)) topOrigin=o; } }catch(e){}
+/* 구글 주소로 바로 열 때: 로그인 정보를 주소 끝(#)에 넣어 홈 화면 바로가기에 함께 저장돼요. */
+const enc = o => { try{ return btoa(unescape(encodeURIComponent(JSON.stringify(o)))); }catch(e){ return ""; } };
+const dec = t => { try{ return JSON.parse(decodeURIComponent(escape(atob(t)))); }catch(e){ return null; } };
+function hashSave(){ try{ const h=window.google?.script?.history; if(!h) return; const a=LS.get("ycn-auth",null);
+h.replace(null, {}, a&&a.who ? "u="+enc({auth:a,ui:LS.get("ycn-ui",{})}) : ""); }catch(e){} }
+const topSave = () => { hashSave(); if(!topOrigin) return; try{ window.top.postMessage({ycn:"save",data:{auth:LS.get("ycn-auth",null),ui:LS.get("ycn-ui",{})}}, topOrigin); }catch(e){} };
+const _set=LS.set, _del=LS.del;
+LS.set=(k,v)=>{ _set(k,v); if(k==="ycn-auth"||k==="ycn-ui") topSave(); };
+LS.del=(k)=>{ _del(k); if(k==="ycn-auth") topSave(); };
+const saved = LS.get("ycn-ui", {});
+const S = {
+auth: LS.get("ycn-auth", null),
+kid: saved.kid==="chaewon"?"chaewon":"yunho",
+mode: saved.mode||null, self: saved.self||null,
+month: THIS_MONTH, tab: saved.tab||"check",
+pub: null, config: null, ent: {yunho:null, chaewon:null}, ledger: {},
+adj: {}, confirm: null, editRule: null, busy:false, loadNote:"", loaded:false
+};
+function remember(){ LS.set("ycn-ui", {kid:S.kid,tab:S.tab,mode:S.mode,self:S.self}); }
+function fixMode(){
+if(!S.auth){ S.mode=null; return; }
+if(S.auth.who!=="parent"){ S.mode="kid"; S.self=S.auth.who; S.kid=S.self; return; }
+if(S.mode!=="kid" || !KIDS.some(k=>k.id===S.self)){ S.mode="parent"; S.self=null; }
+}
+fixMode();
+
+/* ---------- server ---------- */
+/* 홈 화면 앱(github.io)에서는 구글 서버와 데이터만 주고받아요. 서버가 아직 준비 안 됐으면 예전 방식(frame.html)으로 열어요. */
+const EXEC_URL = "https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec";
+function apiFetch(body){
+  return fetch(EXEC_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body),redirect:"follow"})
+    .then(r=>r.text()).then(t=>{ try{ return JSON.parse(t); }catch(e){ const err=new Error("noapi"); err.noapi=true; throw err; } });
+}
+function call(action, payload={}){
+return new Promise((resolve,reject)=>{
+if(!window.google?.script?.run){ apiFetch(Object.assign({}, payload, {action, auth:S.auth}))
+  .then(res=>{ if(res&&res.ok) resolve(res.data); else reject(res||{code:"error",message:"처리하지 못했어요"}); })
+  .catch(e=>{ if(e&&e.noapi&&!window.__fellback){ window.__fellback=1; location.replace("frame.html"); }
+    reject({code:"network",message:"서버에 연결하지 못했어요. 잠시 후 다시 해주세요."}); }); return; }
+google.script.run
+.withSuccessHandler(res=>{ if(res&&res.ok) resolve(res.data); else reject(res||{code:"error",message:"처리하지 못했어요"}); })
+.withFailureHandler(e=>reject({code:"network",message:"서버에 연결하지 못했어요. 잠시 후 다시 해주세요."}))
+.api(Object.assign({}, payload, {action, auth:S.auth}));
 });
+}
+function onErr(e){
+if(e?.code==="auth"&&S.auth&&!S.pinPending){ logout("다시 로그인해 주세요"); return; }
+toast(e?.message||"처리하지 못했어요");
+}
+
+/* ---------- images (Drive → data URL, cached) ---------- */
+const IMG = {};
+let imgTimer=null;
+function imgUrl(id, persist){
+if(!id) return "";
+if(IMG[id] && IMG[id]!=="loading") return IMG[id];
+if(IMG[id]==="loading") return "";
+const cached = persist ? LS.get("img:"+id, null) : null;
+if(cached){ IMG[id]=cached; return cached; }
+IMG[id]="loading";
+call("image",{id}).then(d=>{ IMG[id]=d.url; if(persist) LS.set("img:"+id, d.url); clearTimeout(imgTimer); imgTimer=setTimeout(()=>{ if(!sheetOpen()) render(); applyBg(); },60); })
+.catch(()=>{ IMG[id]="err:"; });
+return "";
+}
+const okUrl = u => u && !u.startsWith("err:") ? u : "";
+function photoFor(key){ // yunho | chaewon | ily | bg
+const id = key==="ily" ? (S.config?.ily||S.pub?.ily) : key==="bg" ? (S.config?.bg||S.pub?.bg) : (S.config?.kids?.[key]?.photo || S.pub?.kids?.[key]?.photo);
+return okUrl(imgUrl(id, true)) || DEFAULT_IMG[key] || "";
+}
+function applyBg(){ const u=photoFor("bg"); const im=$("bgimg"); if(im && u && im.src!==u) im.src=u; }
+
+/* ---------- derived ---------- */
+const kidName = id => S.config?.kids?.[id]?.name || S.pub?.kids?.[id]?.name || KIDS.find(k=>k.id===id)?.name || "";
+const kidShort = id => KIDS.find(k=>k.id===id)?.short || "";
+const avHtml = (id, size) => { const u=photoFor(id); return `<span class="av ${id}" ${size?`style="width:${size}px;height:${size}px;font-size:${Math.round(size/2.2)}px"`:""}>${u?`<img src="${esc(u)}" alt="">`:esc(kidShort(id).slice(0,1))}</span>`; };
+const ilyHead = () => { const u=photoFor("ily"); return `<div class="ilyh">${u?`<img src="${esc(u)}" alt="일리">`:""}<h2>일리 돌봄</h2></div>`; };
+const isKid = () => S.mode==="kid";
+const curKid = () => isKid() ? S.self : S.kid;
+const kidCfg = (k=curKid()) => S.config?.kids?.[k] || null;
+const ledgerKey = (kid,month) => kid+"_"+month;
+const isPaid = (k=curKid()) => !!S.ledger[ledgerKey(k,S.month)]?.paid;
+const status = e => e.status || "ok";
+const entries = (k=curKid()) => S.ent[k];
+function addDays(date,n){ const d=new Date(date+"T00:00:00"); d.setDate(d.getDate()+n); return ymd(d); }
+function weeksOf(month){ // 월~일 주, 목요일이 이 달에 있는 주
+const out=[]; let mon=weekKey(month+"-01"); for(let i=0;i<6;i++){ if(addDays(mon,3).slice(0,7)===month) out.push(mon); mon=addDays(mon,7); } return out; }
+function adjEntries(k){ const r=[]; for(const m of [monthAdd(S.month,-1),monthAdd(S.month,1)]) for(const e of (S.adj[m]?.ent||[])) if(e.kid===k&&status(e)==="ok") r.push(e); return r; }
+function weekKey(date){ const d=new Date(date+"T00:00:00"); d.setDate(d.getDate()-((d.getDay()+6)%7)); return ymd(d); }
+function bonusList(k=curKid()){
+const es=(entries(k)||[]).filter(e=>status(e)==="ok"); const out=[]; const live=S.month===THIS_MONTH;
+for(const b of S.config?.bonuses||[]){
+if(b.off) continue; const amt=Number(b.amount)||0;
+if(b.type==="noMinus"){
+if(b.from && S.month<b.from) continue;
+if(!es.length) continue; const ok=!es.some(e=>e.amount<0);
+out.push({label:b.label,total:ok?amt:0,note:ok?(live?"지금까지 벌점 없음 · 말일까지 유지하면 지급":"달성"):"벌점이 있어 미달성"});
+}else if(b.type==="weekly"){
+const wk={}; for(const e of es) if(e.ruleId===b.ruleId) wk[weekKey(e.date)]=(wk[weekKey(e.date)]||0)+1;
+const weeks=Object.values(wk).filter(n=>n>=(Number(b.min)||1)).length; const cur=wk[weekKey(TODAY)]||0;
+out.push({label:b.label,total:weeks*amt,note:`달성 ${weeks}주 × ${won(amt)}`+(live?` · 이번 주 ${cur}/${b.min}회`:"")});
+}else if(b.type==="weeklyMiss"){
+const amt2=Number(b.amounts?.[k]??b.amount)||0; const min=Number(b.min)||1; if(!amt2) continue;
+const all=es.concat(adjEntries(k)).filter(e=>e.ruleId===b.ruleId);
+let missed=0, cur=null, judged=0;
+for(const mon of weeksOf(S.month)){
+const sun=addDays(mon,6); const n=all.filter(e=>e.date>=mon&&e.date<=sun).length;
+if(sun<TODAY){ judged++; if(n<min) missed++; } else if(mon<=TODAY) cur=n;
+}
+out.push({label:b.label,total:-missed*amt2,pen:true,note:`주 ${min}회 미만이면 주마다 ${won(-amt2)} · 지난 ${judged}주 중 미달 ${missed}주`+(cur!=null?` · 이번 주 ${cur}/${min}회`:"")});
+}
+}
+return out;
+}
+function totals(k=curKid()){
+let p=0,m=0,w=0,wn=0;
+for(const e of entries(k)||[]){ const s=status(e);
+if(s==="ok"){ if(e.amount>0)p+=e.amount; else m+=e.amount; }
+else if(s==="pending"){ w+=e.amount; wn++; } }
+const base = Number(kidCfg(k)?.base)||0;
+const bl=bonusList(k); const bo=bl.reduce((a,b)=>a+b.total,0); const bop=bl.filter(b=>b.total>0).reduce((a,b)=>a+b.total,0); const bon=bo-bop;
+let pay = base+p+m+bo; const raw = pay;
+if(S.config?.floorZero!==false && pay<0) pay=0;
+return {p,m,base,pay,raw,w,wn,bo,bl,bop,bon};
+}
+const pendingCount = k => (S.ent[k]||[]).filter(e=>status(e)==="pending").length;
+function monthAdd(k,d){ let [y,m]=k.split("-").map(Number); m+=d; while(m<1){m+=12;y--} while(m>12){m-=12;y++} return y+"-"+pad(m); }
+const monthLabel = k => { const [y,m]=k.split("-"); return y+"년 "+Number(m)+"월"; };
+function todayUsed(ruleId, k=curKid()){ return (S.ent[k]||[]).filter(e=>e.ruleId===ruleId && e.date===TODAY && status(e)!=="rejected").length; }
+function tabsFor(){ return isKid()
+? [["check","인증",ICON.cam],["log","기록",ICON.log],["settle","내 용돈",ICON.settle]]
+: [["check","체크",ICON.check],["log","기록",ICON.log],["settle","정산",ICON.settle],["setup","설정",ICON.setup]]; }
+const sheetOpen = () => !!$("layer").firstChild;
+
+/* ---------- rule icons ---------- */
+const RI = {
+box:'<path d="M4 9h16v10H4z"/><path d="M3 5h18v4H3zM10 13h4"/>',
+book:'<path d="M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z"/><path d="M4 20V5M8 7h7"/>',
+pencil:'<path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/>',
+recycle:'<path d="M9 4.5 12 3l3 1.5M12 3l-2.5 4.5M17.5 9l2.5 4.5-1.5 3M20 13.5h-5M6.5 9 4 13.5l1.5 3M4 13.5h5M8 20h8"/>',
+bag:'<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+paw:'<circle cx="7" cy="10" r="1.7"/><circle cx="10.5" cy="6.5" r="1.7"/><circle cx="14.5" cy="6.5" r="1.7"/><circle cx="18" cy="10" r="1.7"/><path d="M8.5 17c0-3 1.8-5 3.5-5s3.5 2 3.5 5c0 2-1.8 2.2-3.5 2.2S8.5 19 8.5 17z"/>',
+pad:'<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="10" cy="10" r="1.2"/><circle cx="14" cy="10" r="1.2"/><path d="M10 15c0-1.4.9-2.2 2-2.2s2 .8 2 2.2"/>',
+walk:'<circle cx="8" cy="4.5" r="2"/><path d="M8 7v6l-2 7M8 13l3 7M8 9.5l3.5 1.5L18 9"/><path d="M18 9v6"/><path d="M16 15h4l-1 3h-2z"/>',
+bath:'<path d="M3 12h18v2a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5z"/><path d="M6 12V6a2 2 0 0 1 4 0M7 19l-1 2M17 19l1 2"/>',
+dish:'<circle cx="12" cy="13" r="7"/><circle cx="12" cy="13" r="3"/><path d="M5 3.5l1 2M19 3.5l-1 2M12 2.5v2"/>',
+bowl:'<path d="M3 12h18a9 6.5 0 0 1-18 0z"/><path d="M9 8.5c0-1.5 1-2 1-3.5M14 8.5c0-1.5 1-2 1-3.5"/>',
+heart:'<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+phone:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>',
+shirt:'<path d="M8 4 4 7l2 4 2-1v10h8V10l2 1 2-4-4-3c-.8 1.8-2.2 3-4 3S8.8 5.8 8 4z"/>',
+fork:'<path d="M7 3v7a2 2 0 0 0 4 0V3M9 3v18M17 3c-2 1-2.5 5-2.5 8H17V3zM17 11v10"/>',
+trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>',
+door:'<path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17M3 21h18"/><circle cx="14.5" cy="12" r="1"/>',
+smile:'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4 4 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>',
+lie:'<path d="M4 5h16v11H9l-5 4z"/><path d="M10 8l4 4.5M14 8l-4 4.5"/>',
+bolt:'<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>',
+moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+home:'<path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-5h4v5"/>',
+clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+teach:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5M22 9v5"/>',
+star:'<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8 6.6 19.7l1.1-6.1L3.2 9.4l6.1-.8z"/>',
+alert:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/>'
+};
+const RI_MAP = [["산책","walk"],["봐주기","teach"],["거짓말","lie"],["다툼","bolt"],["싸움","bolt"],["약속 시간","clock"],["귀가","home"],["취침","moon"],["잠","moon"],["휴대폰","phone"],["핸드폰","phone"],["빨래","shirt"],["옷","shirt"],["숙제","pencil"],["과제","pencil"],["책","book"],["공부","book"],["분리수거","recycle"],["심부름","bag"],["배변패드","pad"],["똥","paw"],["오줌","paw"],["목욕","bath"],["설거지","dish"],["식탁","dish"],["밥","bowl"],["도와","heart"],["식사","fork"],["쓰레기","trash"],["화장실","bulb"],["불","bulb"],["노크","door"],["인사","smile"],["정리","box"],["일리","paw"]];
+function ruleIcon(r){
+const hit = RI_MAP.find(([k])=>String(r.label).includes(k));
+const key = hit ? hit[1] : (r.amount>0?"star":"alert");
+return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${RI[key]}</svg>`;
+}
+
+function ruleBtns(rules, cnt, dis, kidView){
+return `<div class="grid">`+rules.map(r=>{
+let lim="", off=dis;
+if(kidView){ const u=todayUsed(r.id); const mx=Number(r.max)||0;
+if(mx){ lim=`<span class="lim num">오늘 ${u}/${mx}회</span>`; if(u>=mx) off=true; } }
+return `<button class="rule ${r.amount>0?"p":"m"} ${r.ily&&r.amount>0?"d":""}" data-rule="${esc(r.id)}" ${off?"disabled":""}>
+${cnt[r.id]?`<span class="cnt num">${cnt[r.id]}</span>`:""}
+<span class="ic">${ruleIcon(r)}</span><span class="t">${esc(r.label)}</span><span class="a num">${won(r.amount)}</span>${lim}</button>`;}).join("")+`</div>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+document.body.className = "k-"+(curKid()||S.kid);
+applyBg();
+$("mLabel").textContent = monthLabel(S.month);
+$("mNext").disabled = S.month>=THIS_MONTH;
+const showMain = !!S.auth;
+$("mainArea").hidden = !showMain;
+$("tabs").parentElement.hidden = !showMain;
+if(!showMain){ renderLogin(); return; }
+const tabs = tabsFor(); if(!tabs.some(t=>t[0]===S.tab)) S.tab="check";
+$("tabs").innerHTML = tabs.map(([id,l,ic])=>`<button role="tab" data-tab="${id}" aria-selected="${S.tab===id}">${ic}${l}</button>`).join("");
+const who = S.auth.who==="parent" ? (S.auth.name||"부모") : kidShort(S.auth.who);
+$("modebar").innerHTML = isKid()
+? `<span class="chip" style="padding-left:4px">${avHtml(S.self,24)}${esc(kidShort(S.self))} 모드</span>${S.auth.who==="parent"?`<button class="ib" data-switch="1">부모님으로 전환</button>`:`<button class="ib" data-logout="1">다른 사람으로 로그인</button>`}`
+: `<span class="chip" style="--kid:var(--ink)"><i></i>${esc(who)} · 부모 모드</span><button class="ib" data-switch="1">아이에게 넘겨주기</button>`;
+$("kids").hidden = isKid();
+$("kids").innerHTML = KIDS.map(k=>{
+const pc = pendingCount(k.id);
+return `<button class="kidbtn" data-kid="${k.id}" aria-pressed="${S.kid===k.id}">
+${avHtml(k.id)}<span><b>${esc(kidName(k.id))}</b><small>${pc?`승인 대기 ${pc}건`:(k.id===S.kid?"선택됨":"눌러서 전환")}</small></span>
+${pc?`<span class="badge num">${pc}</span>`:""}</button>`;
+}).join("");
+renderSum(); renderBanner();
+const v = $("view");
+if(!S.loaded){ v.innerHTML = `<div class="card empty">${esc(S.loadNote||"불러오는 중…")}</div>`; return; }
+({check:isKid()?renderKidCheck:renderCheck,log:renderLog,settle:renderSettle,setup:renderSetup})[S.tab]();
+}
+function renderLogin(){
+const p = S.pub;
+$("loginArea").hidden=false;
+$("loginArea").innerHTML = `<div class="stack"><div class="group"><h2>누가 사용하나요?</h2>
+<p class="note">${p?"처음 한 번만 고르면 다음부터 바로 열려요.":"불러오는 중…"}</p></div>
+${p?`<div class="who">${KIDS.map(k=>`<button data-login="${k.id}">${avHtml(k.id)}${esc(kidName(k.id))}${p.kids?.[k.id]?.hasPin?'<small class="lockic">비밀번호</small>':""}</button>`).join("")}
+${PARENTS.map(n=>`<button data-login="parent" data-name="${n}"><span class="av" style="background:var(--ink);color:var(--bg)">${n.slice(0,1)}</span>${n}${p.hasParentPin?'<small class="lockic">비밀번호</small>':""}</button>`).join("")}</div>`:""}
+</div>`;
+}
+function renderSum(){
+const k=curKid(); const t = totals(k); const paid = isPaid(k); const ready = entries(k)!==null;
+$("sum").innerHTML = `<div>
+<div class="lbl">${isKid()?"":esc(kidName(k))+" · "}${monthLabel(S.month)} ${S.month===THIS_MONTH&&!paid?"예상 용돈":"용돈"} ${paid?'<span class="pill paid">지급 완료</span>':""}</div>
+<div class="big num">${ready?krw(t.pay):"…"}</div>
+${t.wn?`<div class="lbl waitc">승인 대기 ${t.wn}건 (${won(t.w)}) 은 아직 미반영</div>`:""}
+</div>
+<div class="parts num"><span class="lbl">기본 ${krw(t.base)}</span><span class="plus">상점 ${won(t.p)}</span><span class="minus">벌점 ${won(t.m)}</span>${t.bop?`<span class="plus">보너스 ${won(t.bop)}</span>`:""}${t.bon?`<span class="minus">벌칙 ${won(t.bon)}</span>`:""}</div>`;
+}
+function renderBanner(){
+let msg="";
+if(S.auth?.who==="parent" && S.config && !S.config.hasParentPin) msg="부모 비밀번호가 아직 없어요. 설정 탭에서 먼저 정해주세요.";
+else if(isPaid()) msg = monthLabel(S.month)+"은 정산이 끝나서 새 기록을 추가할 수 없어요.";
+else if(S.loadNote && S.loaded) msg = S.loadNote;
+$("banner").innerHTML = msg?`<div class="banner">${esc(msg)}</div>`:"";
+$("banner").hidden = !msg;
+}
+function counts(k){ const c={}; for(const e of S.ent[k]||[]) if(status(e)!=="rejected") c[e.ruleId]=(c[e.ruleId]||0)+1; return c; }
+function thumb(e){
+if(!e.photo) return "";
+const u = okUrl(imgUrl(e.photo,false));
+return `<button class="thumb" data-photo="${esc(e.photo)}" aria-label="사진 크게 보기">${u?`<img src="${esc(u)}" alt="">`:""}</button>`;
+}
+function entryRow(e, opts={}){
+const s=status(e);
+const t = new Date(e.ts); const tm = isNaN(t)||!e.ts?"":pad(t.getHours())+":"+pad(t.getMinutes());
+const src = e.src==="kid" ? "아이 인증" : (e.byName?e.byName+" 기록":"");
+const sub = [opts.showDate?`${Number(e.date.slice(5,7))}/${Number(e.date.slice(8))}`:"", tm, src, e.memo||"", s!=="pending"&&e.reviewer&&e.src==="kid"?e.reviewer+" 확인":"", s==="rejected"&&e.reason?"반려 사유: "+e.reason:""].filter(Boolean).map(esc).join(" · ");
+const pill = s==="pending"?'<span class="pill wait">승인 대기</span>':s==="rejected"?'<span class="pill no">반려</span>':"";
+const k = e.kid||curKid(); const paid=isPaid(k);
+let acts="";
+if(!paid){
+if(S.confirm?.id===e._id){
+if(S.confirm.kind==="reject") acts = `<input class="inp" id="rjReason" placeholder="반려 사유 (선택)" style="flex:1 1 140px"><button class="ib danger" data-reject="${e._id}">반려하기</button><button class="ib" data-cancel="1">취소</button>`;
+else acts = `<button class="ib danger" data-del="${e._id}">삭제</button><button class="ib" data-cancel="1">취소</button>`;
+}else if(!isKid() && s==="pending"){
+acts = `<button class="ib danger" data-askrej="${e._id}">반려</button><button class="ib good" data-approve="${e._id}">승인 ${won(e.amount)}</button>`;
+}else if(!isKid() || (s==="pending" && e.src==="kid")){
+acts = `<button class="ib" data-ask="${e._id}" aria-label="삭제">${isKid()?"인증 취소":"✕"}</button>`;
+}
+}
+return `<div class="row ${s==="rejected"?"dim":""}">${thumb(e)}
+<div class="main"><b>${esc(e.label)}</b> ${pill}<div class="sub">${sub}</div></div>
+<span class="amt num ${e.amount>0?"plus":"minus"}">${won(e.amount)}</span>
+${acts?`<div class="acts">${acts}</div>`:""}</div>`;
+}
+function renderCheck(){
+const k=curKid(); const kc = kidCfg(k); const rules = kc?.rules||[];
+const pend = (S.ent[k]||[]).filter(e=>status(e)==="pending");
+let h = `<div class="stack">`;
+if(pend.length) h += `<section class="group"><h2 class="waitc">승인 대기 · 사진을 확인하고 승인해 주세요</h2><div class="card wait">${pend.map(e=>entryRow(e,{showDate:true})).join("")}</div></section>`;
+if(!rules.length){ $("view").innerHTML = h+`<div class="card empty">${esc(kc?.name||"")} 항목이 아직 없어요. 설정 탭에서 추가해 주세요.</div></div>`; return; }
+const cnt = counts(k); const dis = isPaid(k);
+const plus = rules.filter(r=>r.amount>0&&!r.ily), ily = rules.filter(r=>r.ily), minus = rules.filter(r=>r.amount<0&&!r.ily);
+if(plus.length) h += `<section class="group"><h2>상점 · 좋은 습관</h2>${ruleBtns(plus,cnt,dis)}</section>`;
+if(ily.length) h += `<section class="group">${ilyHead()}${ruleBtns(ily,cnt,dis)}</section>`;
+if(minus.length) h += `<section class="group"><h2>벌점 · 지켜야 할 규율</h2>${ruleBtns(minus,cnt,dis)}</section>`;
+h += `<p class="note">부모님이 누른 기록은 바로 반영돼요. 숫자 배지는 이번 달 횟수예요.</p></div>`;
+$("view").innerHTML = h;
+}
+function renderKidCheck(){
+const k=S.self; const rules=(kidCfg(k)?.rules||[]).filter(r=>r.kidOk && r.amount>0);
+const pend=(S.ent[k]||[]).filter(e=>status(e)==="pending");
+const dis = isPaid(k) || S.month!==THIS_MONTH;
+let h=`<div class="stack"><div class="banner">한 일을 고르고 <b>그 자리에서 사진을 찍어</b> 인증해요. 부모님이 확인하면 용돈에 더해져요.${S.month!==THIS_MONTH?" 인증은 이번 달에만 할 수 있어요.":""}</div>`;
+if(pend.length) h+=`<section class="group"><h2 class="waitc">부모님 확인 기다리는 중</h2><div class="card wait">${pend.map(e=>entryRow(e,{showDate:true})).join("")}</div></section>`;
+if(!rules.length) h+=`<div class="card empty">인증할 수 있는 항목이 없어요.</div>`;
+else{
+const cnt=counts(k); const plus=rules.filter(r=>!r.ily), ily=rules.filter(r=>r.ily);
+if(plus.length) h+=`<section class="group"><h2>좋은 습관</h2>${ruleBtns(plus,cnt,dis,true)}</section>`;
+if(ily.length) h+=`<section class="group">${ilyHead()}${ruleBtns(ily,cnt,dis,true)}</section>`;
+}
+$("view").innerHTML=h+`</div>`;
+}
+function renderLog(){
+const es = entries();
+if(es===null){ $("view").innerHTML = `<div class="card empty">불러오는 중…</div>`; return; }
+if(!es.length){ $("view").innerHTML = `<div class="card empty">${monthLabel(S.month)} 기록이 없어요.</div>`; return; }
+const byDay = {}; for(const e of es){ (byDay[e.date] ||= []).push(e); }
+let h = `<div class="card">`;
+for(const d of Object.keys(byDay).sort().reverse()){
+const dt = new Date(d+"T00:00:00");
+const sum = byDay[d].filter(e=>status(e)==="ok").reduce((a,e)=>a+e.amount,0);
+h += `<div class="day num">${Number(d.slice(5,7))}월 ${Number(d.slice(8))}일 (${WD[dt.getDay()]}) · ${won(sum)}</div>`;
+h += byDay[d].map(e=>entryRow(e)).join("");
+}
+$("view").innerHTML = h+`</div>`;
+}
+function renderSettle(){
+const k=curKid(); const es = entries(k);
+if(es===null){ $("view").innerHTML = `<div class="card empty">불러오는 중…</div>`; return; }
+const agg = {};
+for(const e of es){ if(status(e)!=="ok") continue; const a = agg[e.label+"|"+e.amount] ||= {label:e.label,amount:e.amount,n:0}; a.n++; }
+const rows = Object.values(agg).sort((a,b)=>b.amount-a.amount);
+const t = totals(k); const led = S.ledger[ledgerKey(k,S.month)];
+let h = `<div class="stack" style="gap:12px"><div class="card"><div class="srow"><span>기본 용돈</span><span class="num">${krw(t.base)}</span></div>`;
+for(const r of rows) h += `<div class="srow"><span>${esc(r.label)} <span class="x num">× ${r.n}</span></span><span class="num ${r.amount>0?"plus":"minus"}">${won(r.amount*r.n)}</span></div>`;
+if(!rows.length) h += `<div class="srow"><span class="x">이달 반영된 상벌 기록 없음</span><span></span></div>`;
+for(const b of t.bl) h += `<div class="srow"><span><span class="pill ${b.total>0?"ok":b.total<0?"no":""}">${b.pen?"벌칙":"보너스"}</span> ${esc(b.label)}<br><span class="x">${esc(b.note)}</span></span><span class="num ${b.total>0?"plus":b.total<0?"minus":"x"}">${b.total?won(b.total):"0"}</span></div>`;
+if(t.raw<0 && t.pay===0) h += `<div class="srow"><span class="x">계산 결과 ${krw(t.raw)} → 0원 처리</span><span></span></div>`;
+h += `<div class="srow total"><span>${esc(kidName(k))} 지급액</span><span class="num">${krw(t.pay)}</span></div></div>`;
+if(t.wn) h += `<div class="banner wait">승인 대기 ${t.wn}건(${won(t.w)})은 아직 포함되지 않았어요.</div>`;
+if(led?.paid){
+h += `<p class="note">${esc(led.paidAt||"")} ${krw(Number(led.total)||0)} 지급 완료${led.by?" · "+esc(led.by):""}.${Number(led.total)!==t.pay?` 지금 계산액(${krw(t.pay)})과 달라요.`:""}</p>`;
+if(!isKid()) h += `<button class="btn ghost" data-unpay="1">지급 취소 (기록 다시 열기)</button>`;
+}else if(!isKid()){
+const last = new Date(Number(S.month.slice(0,4)), Number(S.month.slice(5,7)), 0).getDate();
+const early = S.month===THIS_MONTH && Number(TODAY.slice(8))<last;
+h += `<button class="btn" data-pay="1" ${t.wn?"disabled":""}>${krw(t.pay)} 지급 완료</button>
+<p class="note">${t.wn?"승인 대기 건을 먼저 승인하거나 반려해 주세요. ":""}${early?`정산일은 ${Number(S.month.slice(5,7))}월 ${last}일이에요. `:""}지급 완료하면 이 달 기록이 잠겨요.</p>`;
+}else h += `<p class="note">매달 말일에 부모님이 정산해서 지급해요.</p>`;
+$("view").innerHTML = h+`</div>`;
+}
+function renderSetup(){
+const k=curKid(); const kc = kidCfg(k) || {name:kidName(k), base:0, rules:[]};
+const rules = [...(kc.rules||[])].sort((a,b)=>(b.amount>0)-(a.amount>0) || (!!a.ily)-(!!b.ily) || Math.abs(a.amount)-Math.abs(b.amount));
+let h = `<div class="stack">
+<section class="group"><h2>부모 비밀번호 (아빠·엄마 공통)</h2>
+<p class="note">${S.config?.hasParentPin?"설정되어 있어요.":"아직 없어요. 지금 정해주세요. 없으면 누구나 부모로 들어올 수 있어요."}</p>
+<div class="inline"><input class="inp num" id="pinInp" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="숫자 4~8자리"><button class="ib solid" data-savepin="parent">${S.config?.hasParentPin?"변경":"설정"}</button></div>
+</section>
+<section class="group"><h2>${esc(kc.name)} 비밀번호</h2>
+<p class="note">${kc.hasPin?"설정되어 있어요. 형제가 대신 로그인하지 못해요.":"없어요. 없으면 이름만 눌러 들어와요."}</p>
+<div class="inline"><input class="inp num" id="kidPinInp" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="숫자 4~8자리"><button class="ib solid" data-savepin="${k}">${kc.hasPin?"변경":"설정"}</button>${kc.hasPin?`<button class="ib" data-clearpin="${k}">없애기</button>`:""}</div>
+</section>
+<section class="group"><h2>사진</h2>
+<div class="inline">${avHtml(k)}<label class="ib solid" for="avFile">${esc(kidShort(k))} 프로필 바꾸기</label><input id="avFile" data-target="${k}" type="file" accept="image/*" hidden></div>
+<div class="inline"><label class="ib" for="ilyFile">일리 사진 바꾸기</label><input id="ilyFile" data-target="ily" type="file" accept="image/*" hidden></div>
+</section>
+<section class="group"><h2>${esc(kc.name)} 기본 용돈</h2>
+<div class="inline"><input class="inp num" id="baseInp" type="number" inputmode="numeric" step="1000" value="${Number(kc.base)||0}"><button class="ib solid" data-savebase="1">저장</button></div>
+<label class="chk"><input type="checkbox" id="floorChk" ${S.config?.floorZero!==false?"checked":""}> 벌점이 많아도 지급액은 0원 아래로 내려가지 않게 (두 아이 공통)</label>
+</section>
+<section class="group"><h2>${esc(kc.name)} 상벌 항목</h2><div class="card">`;
+for(const r of rules){
+if(S.editRule===r.id){
+h += `<div class="edrow"><input class="inp" id="eLabel" value="${esc(r.label)}" aria-label="항목 이름"><input class="inp num" id="eAmt" type="number" inputmode="numeric" step="500" value="${r.amount}" aria-label="금액(벌점은 음수)">
+<div class="acts"><label class="chk"><input type="checkbox" id="eIly" ${r.ily?"checked":""}> 일리 돌봄</label>
+<label class="chk"><input type="checkbox" id="eKid" ${r.kidOk?"checked":""}> 아이가 사진 인증</label>
+<label class="chk">하루 <input class="inp num mini" id="eMax" type="number" inputmode="numeric" min="0" value="${Number(r.max)||0}">회</label></div>
+<div class="acts"><span style="flex:1"></span><button class="ib danger" data-rdel="${esc(r.id)}">삭제</button><button class="ib" data-rcancel="1">취소</button><button class="ib solid" data-rsave="${esc(r.id)}">저장</button></div></div>`;
+}else{
+const tags=[r.ily?"일리 돌봄":"", r.kidOk?`아이 인증${Number(r.max)?` · 하루 ${r.max}회`:""}`:""].filter(Boolean).join(" · ");
+h += `<div class="row"><div class="main"><b>${esc(r.label)}</b>${tags?`<div class="sub">${esc(tags)}</div>`:""}</div><span class="amt num ${r.amount>0?"plus":"minus"}">${won(r.amount)}</span><button class="ib" data-redit="${esc(r.id)}">수정</button></div>`;
+}
+}
+if(!rules.length) h += `<div class="empty">항목이 없어요.</div>`;
+h += `</div><p class="note">벌점 항목은 금액을 음수로 적어요(예: −500). "하루 0회"는 제한 없음이에요.</p></section>
+<section class="group"><h2>보너스·벌칙 (자동 계산)</h2><div class="card">${(S.config?.bonuses||[]).map(b=>`<div class="row"><div class="main"><b>${esc(b.label)}</b><div class="sub">${b.type==="weeklyMiss"?`미달한 주마다 ${esc(kc.name)} 차감`:b.type==="weekly"?"달성한 주마다 지급 · 두 아이 공통":`한 달에 한 번 · 두 아이 공통${b.from?` · ${Number(b.from.slice(5,7))}월부터`:""}`}</div></div>
+<label class="chk"><input type="checkbox" id="bOn_${esc(b.id)}" ${b.off?"":"checked"}> 사용</label><input class="inp num mini" style="width:84px${b.type==="weeklyMiss"?";color:var(--minus)":""}" id="bAmt_${esc(b.id)}" type="number" inputmode="numeric" step="500" value="${b.type==="weeklyMiss"?-Math.abs(Number(b.amounts?.[k]??b.amount)||0):(Number(b.amount)||0)}" aria-label="금액"><button class="ib solid" data-bsave="${esc(b.id)}">저장</button></div>`).join("")||`<div class="empty">보너스가 없어요.</div>`}</div></section>
+<section class="group"><h2>항목 추가</h2>
+<div class="inline"><input class="inp" id="nLabel" placeholder="예: 숙제 먼저 하기" style="flex:2 1 160px"><input class="inp num" id="nAmt" type="number" inputmode="numeric" step="500" placeholder="금액" style="flex:1 1 90px"></div>
+<div class="inline"><label class="chk"><input type="radio" name="nSign" value="1" checked> 상점</label><label class="chk"><input type="radio" name="nSign" value="-1"> 벌점</label><label class="chk"><input type="checkbox" id="nIly"> 일리 돌봄</label><label class="chk"><input type="checkbox" id="nKid" checked> 아이가 사진 인증</label><button class="ib solid" data-radd="1">추가</button></div>
+<p class="note">${esc(kc.name)}에게만 추가돼요.</p>
+</section>
+<section class="group"><button class="btn ghost" data-logout="1">로그아웃 (${esc(S.auth?.name||"")})</button>
+<p class="note">기록은 구글 시트에 저장돼요. 시트에서 직접 고친 내용은 앱을 새로고침하면 반영돼요.</p></section></div>`;
+$("view").innerHTML = h;
+}
+
+/* ---------- photo helpers ---------- */
+async function loadImage(file){
+try{ return await createImageBitmap(file); }catch(e){}
+return await new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=URL.createObjectURL(file); });
+}
+async function toJpeg(file, maxSide, stamp, square){
+const img = await loadImage(file);
+const w0=img.width||img.naturalWidth, h0=img.height||img.naturalHeight;
+const c = document.createElement("canvas"); const g=c.getContext("2d");
+if(square){ const side=Math.min(w0,h0); c.width=c.height=square; g.drawImage(img,(w0-side)/2,Math.max(0,(h0-side)/3),side,side,0,0,square,square); }
+else{ const s=Math.min(1,maxSide/Math.max(w0,h0)); c.width=Math.round(w0*s); c.height=Math.round(h0*s); g.drawImage(img,0,0,c.width,c.height); }
+if(stamp){ const fs=Math.max(16,Math.round(c.width/26)); const bh=Math.round(fs*1.9);
+g.fillStyle="rgba(0,0,0,.55)"; g.fillRect(0,c.height-bh,c.width,bh);
+g.fillStyle="#fff"; g.font=`600 ${fs}px "IBM Plex Sans KR",system-ui,sans-serif`; g.textBaseline="middle";
+g.fillText(stamp, Math.round(fs*.6), c.height-bh/2, c.width-fs*1.2); }
+return c.toDataURL("image/jpeg",.82);
+}
+async function hashFile(file){
+try{ const d=await crypto.subtle.digest("SHA-256",await file.arrayBuffer());
+return [...new Uint8Array(d)].slice(0,16).map(b=>b.toString(16).padStart(2,"0")).join(""); }catch(e){ return ""; }
+}
+function stampText(rule){ const n=new Date(); return `${n.getFullYear()}.${pad(n.getMonth()+1)}.${pad(n.getDate())} ${pad(n.getHours())}:${pad(n.getMinutes())} · ${kidName(curKid())} · ${rule.label}`; }
+
+/* ---------- record sheet ---------- */
+let pending = null;
+function openSheet(rule){
+const kid = isKid();
+const def = S.month===THIS_MONTH ? TODAY : S.month+"-01";
+const max = S.month===THIS_MONTH ? TODAY : ymd(new Date(Number(S.month.slice(0,4)),Number(S.month.slice(5,7)),0));
+pending = {rule, file:null, hash:"", checks:null};
+$("layer").innerHTML = `<div class="scrim" data-close="1"><div class="sheet" role="dialog" aria-label="${kid?"인증하기":"기록하기"}">
+<div class="head"><b>${esc(rule.label)}</b><span class="num ${rule.amount>0?"plus":"minus"}" style="font-weight:700;font-size:18px">${won(rule.amount)}원</span></div>
+${kid?`<label class="cam" for="sFile" id="camBox">${ICON.cam}<span>여기를 눌러 지금 사진 찍기</span><small style="font-weight:400">${esc(rule.label)}한 모습이 보이게 찍어주세요</small></label>
+<input id="sFile" type="file" accept="image/*" capture="environment" hidden><ul class="checks" id="checks"></ul>`
+:`<div class="field"><label for="sDate">날짜</label><input class="inp" id="sDate" type="date" value="${def}" min="${S.month}-01" max="${max}"></div>`}
+<div class="field"><label for="sMemo">메모 (선택)</label><input class="inp" id="sMemo" placeholder="${kid?"예: 놀이터까지 30분":"예: 저녁 산책 30분"}"></div>
+${!kid?`<div class="field"><label>사진 (선택)</label><div class="inline"><img id="sPrev" alt="" hidden style="width:64px;height:64px;border-radius:10px;object-fit:cover"><label class="ib" for="sFile">사진 찍기/선택</label><input id="sFile" type="file" accept="image/*" hidden></div></div>`:""}
+<button class="btn" id="sGo" ${kid?"disabled":""}>${kid?"부모님께 인증 보내기":`${esc(kidName(curKid()))} ${rule.amount>0?"상점":"벌점"} 기록하기`}</button>
+<button class="btn ghost" data-close="1">닫기</button></div></div>`;
+$("sGo").onclick = commit;
+if(kid) renderChecks();
+$("sFile").onchange = () => onPhoto($("sFile").files[0]);
+}
+function renderChecks(){
+if(!pending || !$("checks")) return;
+const c = pending.checks || {}; const u = todayUsed(pending.rule.id), mx = Number(pending.rule.max)||0;
+const items = [["photo","사진 찍기",c.photo],["fresh",`방금 찍은 사진 (${FRESH_MIN}분 이내, 앨범 사진 불가)`,c.fresh],["dup","이전에 쓴 사진이 아님",c.dup],["limit",mx?`오늘 횟수 남음 (${u}/${mx}회)`:"오늘 횟수 제한 없음",mx?u<mx:true]];
+$("checks").innerHTML = items.map(([id,l,v])=>`<li class="${v===true?"y":v===false?"n":""}"><span class="ic">${v===true?"✓":v===false?"!":"·"}</span><span>${esc(l)}${v===false&&c[id+"Msg"]?`<br><small>${esc(c[id+"Msg"])}</small>`:""}</span></li>`).join("");
+$("sGo").disabled = !items.every(i=>i[2]===true) || S.busy;
+}
+async function onPhoto(file){
+if(!file || !pending) return;
+if(!isKid()){ pending.file=file; const p=$("sPrev"); if(p){p.src=URL.createObjectURL(file); p.hidden=false;} return; }
+const c = pending.checks = {};
+c.photo = /^image\//.test(file.type) || /\.(jpe?g|png|heic|heif|webp)$/i.test(file.name||"");
+if(!c.photo) c.photoMsg="사진 파일이 아니에요.";
+const age = Date.now()-(file.lastModified||0);
+c.fresh = !!file.lastModified && age>=-60000 && age<=FRESH_MIN*60000;
+if(!c.fresh) c.freshMsg="앨범에 있던 사진은 안 돼요. 지금 바로 찍어주세요.";
+const h = await hashFile(file); pending.hash=h;
+const used = h && (S.ent[curKid()]||[]).some(e=>e.photoHash===h);
+c.dup=!used; if(used) c.dupMsg="이미 인증에 쓴 사진이에요.";
+pending.file = (c.photo&&c.fresh&&c.dup)?file:null;
+const box=$("camBox"); if(box) box.innerHTML=`<img alt="찍은 사진" src="${URL.createObjectURL(file)}"><small>다시 찍으려면 눌러요</small>`;
+renderChecks();
+}
+function closeSheet(){ $("layer").innerHTML=""; pending=null; }
+async function commit(){
+if(!pending || S.busy) return;
+const kid=isKid(); const k=curKid(); const r=pending.rule;
+const date = kid ? TODAY : ($("sDate").value || TODAY);
+const memo = $("sMemo").value.trim().slice(0,200);
+if(S.ledger[ledgerKey(k,date.slice(0,7))]?.paid){ toast("이미 정산된 달이에요"); return; }
+if(kid && !pending.file){ toast("사진 인증을 먼저 완료해 주세요"); return; }
+S.busy=true; $("sGo").disabled=true; $("sGo").textContent=kid?"보내는 중…":"기록 중…";
+try{
+const photo = pending.file ? await toJpeg(pending.file, 1280, stampText(r)) : null;
+await call("addEntry",{kid:k, ruleId:r.id, date, memo, photo, photoHash: kid?pending.hash:"", asKid: kid});
+closeSheet();
+toast(kid?"인증을 보냈어요. 부모님이 확인하면 반영돼요":`${kidName(k)} · ${r.label} ${won(r.amount)} 기록했어요`);
+if(date.slice(0,7)!==S.month) S.month=date.slice(0,7);
+await refresh();
+}catch(e){ onErr(e); if($("sGo")){ $("sGo").disabled=false; $("sGo").textContent="다시 시도"; } }
+finally{ S.busy=false; }
+}
+let tt; function toast(m){ clearTimeout(tt); let el=document.querySelector(".toast"); if(!el){el=document.createElement("div");el.className="toast";el.setAttribute("role","status");document.body.appendChild(el);} el.textContent=m; tt=setTimeout(()=>el.remove(),2800); }
+
+/* ---------- login / mode ---------- */
+function openPin(title, onOk){
+$("layer").innerHTML = `<div class="scrim" data-close="1"><div class="sheet" role="dialog" aria-label="${esc(title)}">
+<div class="head"><b>${esc(title)}</b></div>
+<input class="inp num" id="pinTry" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="숫자 비밀번호" style="font-size:22px;letter-spacing:.3em;text-align:center">
+<p class="note" id="pinMsg"></p>
+<button class="btn" id="pinGo" style="--kid:var(--ink);--on-kid:var(--bg)">확인</button>
+<button class="btn ghost" data-close="1">닫기</button></div></div>`;
+const go = async () => { const v=$("pinTry").value.trim(); if(!v) return; $("pinGo").disabled=true;
+try{ await onOk(v); }catch(e){ if($("pinMsg")) $("pinMsg").textContent=e?.message||"확인하지 못했어요"; if($("pinTry")){ $("pinTry").value=""; $("pinTry").focus(); } }
+finally{ if($("pinGo")) $("pinGo").disabled=false; } };
+$("pinGo").onclick=go; $("pinTry").onkeydown=e=>{ if(e.key==="Enter") go(); };
+setTimeout(()=>$("pinTry")?.focus(),50);
+}
+async function tryLogin(who, name, pin){
+const prev=S.auth; S.auth={who, name: who==="parent"?name:kidName(who), pin:pin||""}; S.pinPending=true;
+try{ await call("login"); }catch(e){ S.auth=prev; throw e; } finally{ S.pinPending=false; }
+LS.set("ycn-auth", S.auth); S.mode=null; fixMode(); S.tab="check"; remember(); closeSheet();
+$("loginArea").hidden=true; S.loaded=false; render(); await refresh();
+if(who==="parent" && !S.config?.hasParentPin) toast("설정 탭에서 부모 비밀번호를 먼저 정해주세요");
+}
+function startLogin(who, name){
+const needs = who==="parent" ? S.pub?.hasParentPin : S.pub?.kids?.[who]?.hasPin;
+if(!needs){ tryLogin(who,name,"").catch(onErr); return; }
+openPin(`${who==="parent"?name:kidName(who)} 비밀번호`, pin=>tryLogin(who,name,pin));
+}
+function logout(msg){
+LS.del("ycn-auth"); S.auth=null; S.mode=null; S.self=null; S.config=null; S.ent={yunho:null,chaewon:null}; S.loaded=false; remember(); closeSheet();
+render(); if(msg) toast(msg); boot();
+}
+function setMode(mode, self){
+S.mode=mode; S.self=mode==="kid"?self:null; if(mode==="kid") S.kid=self;
+S.tab="check"; S.confirm=null; S.editRule=null; remember(); closeSheet(); render(); window.scrollTo(0,0);
+}
+function openHandOver(){
+$("layer").innerHTML = `<div class="scrim" data-close="1"><div class="sheet" role="dialog" aria-label="아이에게 넘겨주기">
+<div class="head"><b>잠깐 아이에게 넘겨줄까요?</b></div>
+<p class="note">아이 모드에서는 상점 항목만 사진으로 인증할 수 있고, 부모님 승인 후 반영돼요. 부모 모드로 돌아올 때 비밀번호가 필요해요.</p>
+<div class="who">${KIDS.map(k=>`<button data-become="${k.id}">${avHtml(k.id)}${esc(kidName(k.id))}</button>`).join("")}</div>
+<button class="btn ghost" data-close="1">닫기</button></div></div>`;
+}
+function backToParent(){
+if(!S.config?.hasParentPin){ setMode("parent"); return; }
+openPin("부모 비밀번호", async pin => {
+const prev=S.auth; S.auth=Object.assign({},prev,{pin}); S.pinPending=true;
+try{ await call("login"); LS.set("ycn-auth",S.auth); setMode("parent"); }catch(e){ S.auth=prev; throw e; } finally{ S.pinPending=false; }
+});
+}
+
+/* ---------- data ---------- */
+let loadSeq=0;
+async function loadAdj(month){
+if(!(S.config?.bonuses||[]).some(b=>b.type==="weeklyMiss"&&!b.off)) return;
+for(const m of [monthAdd(month,-1),monthAdd(month,1)]){
+if(m>THIS_MONTH) continue; const c=S.adj[m];
+if(c && (c.busy || (m!==THIS_MONTH && Date.now()-c.at<300000) || (m===THIS_MONTH && Date.now()-c.at<30000))) continue;
+S.adj[m]=Object.assign({ent:[]},c,{busy:true});
+try{ const d=await call("load",{month:m}); S.adj[m]={ent:d.entries||[],at:Date.now()}; if(S.month===month && !sheetOpen()) render(); }
+catch(e){ S.adj[m]=Object.assign({},c||{ent:[]},{at:Date.now()}); }
+}
+}
+async function refresh(silent){
+if(!S.auth) return;
+const seq=++loadSeq; const month=S.month;
+try{
+const d = await call("load",{month});
+if(seq!==loadSeq) return;
+TODAY=d.today; THIS_MONTH=TODAY.slice(0,7);
+S.config=d.config; S.ledger=d.ledger||{};
+S.ent={yunho:[],chaewon:[]}; for(const e of d.entries||[]) (S.ent[e.kid] ||= []).push(e);
+S.loaded=true; S.loadNote="";
+loadAdj(month);
+}catch(e){
+if(seq!==loadSeq) return;
+if(e?.code==="auth"){ logout("비밀번호가 바뀌었어요. 다시 로그인해 주세요"); return; }
+S.loadNote=e?.message||"불러오지 못했어요"; if(!silent) toast(S.loadNote);
+}
+if(!sheetOpen()) render(); else if(isKid()) renderChecks();
+}
+async function boot(){
+try{ const d=await call("boot"); S.pub=d.cfg; TODAY=d.today; THIS_MONTH=TODAY.slice(0,7); if(!S.auth) S.month=THIS_MONTH; }
+catch(e){ S.loadNote=e?.message||"서버에 연결하지 못했어요"; if(!S.auth){ $("loginArea").innerHTML=`<div class="card empty">${esc(S.loadNote)}</div>`; return; } }
+render();
+}
+async function act(promise, okMsg){ try{ await promise; if(okMsg) toast(okMsg); }catch(e){ onErr(e); } await refresh(true); }
+
+/* ---------- events ---------- */
+document.addEventListener("click", async ev => {
+const b = ev.target.closest("button,[data-close]"); if(!b) return;
+const d = b.dataset;
+if(d.close!==undefined && ev.target===b){ closeSheet(); return; }
+if(d.login){ startLogin(d.login, d.name); return; }
+if(d.logout){ logout(); return; }
+if(d.become){ setMode("kid", d.become); return; }
+if(d.switch){ isKid()?backToParent():openHandOver(); return; }
+if(d.kid && b.classList.contains("kidbtn")){ S.kid=d.kid; S.confirm=null; S.editRule=null; remember(); render(); return; }
+if(d.tab){ S.tab=d.tab; S.confirm=null; S.editRule=null; remember(); render(); window.scrollTo(0,0); return; }
+if(b.id==="mPrev"){ S.month=monthAdd(S.month,-1); S.ent={yunho:null,chaewon:null}; render(); refresh(); return; }
+if(b.id==="mNext"){ if(S.month<THIS_MONTH){ S.month=monthAdd(S.month,1); S.ent={yunho:null,chaewon:null}; render(); refresh(); } return; }
+if(d.rule){ const r=(kidCfg()?.rules||[]).find(x=>x.id===d.rule); if(r) openSheet(r); return; }
+if(d.photo){ const u=okUrl(imgUrl(d.photo,false)); if(u) $("layer").innerHTML=`<div class="viewer" data-close="1"><img src="${esc(u)}" alt="인증 사진" data-close="1"></div>`; return; }
+if(d.ask){ S.confirm={id:d.ask,kind:"del"}; render(); return; }
+if(d.askrej){ S.confirm={id:d.askrej,kind:"reject"}; render(); setTimeout(()=>$("rjReason")?.focus(),30); return; }
+if(d.cancel){ S.confirm=null; render(); return; }
+if(d.approve){ b.disabled=true; await act(call("review",{id:d.approve,decision:"ok"}),"승인했어요"); return; }
+if(d.reject){ const reason=($("rjReason")?.value||"").trim(); b.disabled=true; S.confirm=null; await act(call("review",{id:d.reject,decision:"rejected",reason}),"반려했어요"); return; }
+if(d.del){ b.disabled=true; S.confirm=null; await act(call("deleteEntry",{id:d.del}),"삭제했어요"); return; }
+if(d.pay){ const k=curKid(); const t=totals(k); b.disabled=true;
+await act(call("pay",{kid:k,month:S.month,summary:{base:t.base,plus:t.p,minus:t.m,bonus:t.bo,total:t.pay}}),`${kidName(k)} ${krw(t.pay)} 지급 완료`); return; }
+if(d.unpay){ b.disabled=true; await act(call("unpay",{kid:curKid(),month:S.month}),"지급 취소했어요. 기록이 다시 열렸어요"); return; }
+if(d.savepin){ const inp = d.savepin==="parent"?$("pinInp"):$("kidPinInp"); const v=inp.value.trim();
+if(!/^\d{4,8}$/.test(v)){ toast("숫자 4~8자리로 정해주세요"); return; }
+b.disabled=true;
+try{ await call("setPin",{target:d.savepin,pin:v}); if(d.savepin==="parent"){ S.auth.pin=v; LS.set("ycn-auth",S.auth); } toast("비밀번호를 저장했어요"); }catch(e){ onErr(e); }
+await refresh(true); return; }
+if(d.clearpin){ b.disabled=true; await act(call("setPin",{target:d.clearpin,pin:""}),"비밀번호를 없앴어요"); return; }
+if(d.savebase){ const v=Math.max(0,Math.round(Number($("baseInp").value)||0)); b.disabled=true;
+await act(call("saveSettings",{settings:{["base_"+curKid()]:v}}),"기본 용돈을 저장했어요"); return; }
+if(d.redit){ S.editRule=d.redit; render(); return; }
+if(d.rcancel){ S.editRule=null; render(); return; }
+if(d.rsave){ const label=$("eLabel").value.trim(); const amt=Math.round(Number($("eAmt").value));
+if(!label||!amt){ toast("이름과 금액(0 제외)을 입력해 주세요"); return; }
+b.disabled=true; S.editRule=null;
+await act(call("saveRule",{kid:curKid(),rule:{id:d.rsave,label,amount:amt,ily:$("eIly").checked,kidOk:$("eKid").checked,max:Number($("eMax").value)||0}}),"수정했어요. 지난 기록의 금액은 그대로예요"); return; }
+if(d.rdel){ if(!d.sure){ b.textContent="정말 삭제"; b.dataset.sure="1"; return; } b.disabled=true; S.editRule=null;
+await act(call("deleteRule",{kid:curKid(),id:d.rdel}),"항목을 삭제했어요. 지난 기록은 남아요"); return; }
+if(d.radd){ const label=$("nLabel").value.trim(); const amt=Math.abs(Math.round(Number($("nAmt").value)));
+const sign=Number(document.querySelector('input[name="nSign"]:checked').value);
+if(!label||!amt){ toast("이름과 금액을 입력해 주세요"); return; } b.disabled=true;
+await act(call("saveRule",{kid:curKid(),rule:{label,amount:sign*amt,ily:$("nIly").checked,kidOk:sign>0&&$("nKid").checked,max:sign>0?1:0}}),"추가했어요"); return; }
+if(d.bsave){ const list=JSON.parse(JSON.stringify(S.config?.bonuses||[])); const x=list.find(z=>z.id===d.bsave); if(!x) return;
+const bv=Math.abs(Math.round(Number($("bAmt_"+d.bsave).value)||0)); if(x.type==="weeklyMiss"){ x.amounts=Object.assign({},x.amounts,{[curKid()]:bv}); } else x.amount=bv; x.off=!$("bOn_"+d.bsave).checked; b.disabled=true;
+await act(call("saveSettings",{settings:{bonuses:list}}),"보너스를 저장했어요"); return; }
+});
+document.addEventListener("change", async ev => {
+const t=ev.target;
+if(t.id==="floorChk"){ await act(call("saveSettings",{settings:{floorZero:t.checked}})); return; }
+if(t.dataset?.target && t.files?.[0]){
+const target=t.dataset.target; toast("사진 올리는 중…");
+try{ const data = target==="bg" ? await toJpeg(t.files[0],1100) : await toJpeg(t.files[0],0,null,320);
+await call("setPhoto",{target,data}); toast("사진을 바꿨어요"); }catch(e){ onErr(e); }
+await refresh(true);
+}
+});
+document.addEventListener("keydown", ev => { if(ev.key==="Escape") closeSheet(); });
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && S.auth && !sheetOpen()) refresh(true); });
+setInterval(()=>{ if(!document.hidden && S.auth && !sheetOpen() && !S.busy) refresh(true); }, 30000);
+
+function applyRestored(d){
+if(!d || !d.auth || !d.auth.who) return false;
+_set("ycn-auth",d.auth); _set("ycn-ui",d.ui||{}); S.auth=d.auth; const u=d.ui||{};
+S.kid=u.kid==="chaewon"?"chaewon":"yunho"; S.mode=u.mode||null; S.self=u.self||null; S.tab=u.tab||"check"; fixMode(); return true;
+}
+function restoreFromHash(){
+return new Promise(res=>{
+const g=window.google?.script?.url; if(S.auth || !g){ res(false); return; }
+const t=setTimeout(()=>res(false),1500);
+try{ g.getLocation(loc=>{ clearTimeout(t); const m=/(?:^|&)u=([^&]+)/.exec(String(loc?.hash||"")); res(m?applyRestored(dec(decodeURIComponent(m[1]))):false); }); }catch(e){ clearTimeout(t); res(false); }
+});
+}
+function restoreFromTop(){
+return new Promise(res=>{
+if(S.auth || !topOrigin){ res(false); return; }
+const t=setTimeout(()=>{ window.removeEventListener("message",on); res(false); },700);
+function on(ev){
+if(ev.origin!==topOrigin || !ev.data || ev.data.ycn!=="state") return;
+clearTimeout(t); window.removeEventListener("message",on);
+res(applyRestored(ev.data.data||{}));
+}
+window.addEventListener("message",on);
+try{ window.top.postMessage({ycn:"load"}, topOrigin); }catch(e){ clearTimeout(t); res(false); }
+});
+}
+/* 화면 가장자리: 바깥 페이지(github.io)가 알려주는 상태바·홈 바 높이만큼만 비워요. */
+(function(){ const st=document.createElement("style"); st.textContent=`
+:root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--clip:0px}
+body{padding-top:max(4px,var(--sat))!important;padding-bottom:calc(72px + var(--sab) + var(--clip))!important}
+.tabs{padding-bottom:calc(6px + var(--sab))!important;bottom:var(--clip)!important}
+.sheet{padding-bottom:calc(18px + var(--sab))!important}
+.toast{bottom:calc(84px + var(--sab))!important}
+/* 아이폰은 16px보다 작은 입력칸을 누르면 화면을 확대해서 글자가 잘려 보여요. */
+input,select,textarea{font-size:16px!important}`; document.head.appendChild(st);
+window.addEventListener("message",ev=>{ if(ev.origin!==topOrigin||!ev.data||ev.data.ycn!=="insets") return;
+const r=document.documentElement.style; r.setProperty("--sat",(Number(ev.data.top)||0)+"px"); r.setProperty("--sab",(Number(ev.data.bottom)||0)+"px");
+/* 아이폰은 안쪽 화면을 바깥 틀보다 길게 잡을 때가 있어요. 그 차이만큼 탭바를 올려서 가려지지 않게 해요. */
+const fh=Number(ev.data.frameH)||0; r.setProperty("--clip",(fh>0?Math.max(0,Math.round(window.innerHeight-fh)):0)+"px"); });
+/* 홈 화면 앱(github.io) 안에서는 아이폰이 화면 맨 아래 칸을 가리거나 누르지 못하게 할 때가 있어요.
+   그래서 탭바는 아래에 두되 그 칸보다 위에 둥글게 띄우고, 팝업은 화면 가운데에 띄워요. */
+if(topOrigin){
+document.documentElement.classList.add("emb");
+const st2=document.createElement("style"); st2.textContent=`
+.emb{--lift:calc(8px + max(var(--sat), var(--sab)))}
+.emb body{padding-bottom:calc(96px + var(--lift))!important}
+.emb .tabs{left:12px!important;right:12px!important;bottom:var(--lift)!important;border:1px solid var(--line)!important;
+ border-radius:22px!important;padding:6px 8px!important;box-shadow:0 6px 24px rgba(20,30,50,.18)}
+.emb .scrim{align-items:center!important;padding:16px}
+.emb .sheet{border-radius:18px!important;padding-bottom:18px!important;max-height:80vh}
+.emb .toast{bottom:calc(84px + var(--lift))!important}`; document.head.appendChild(st2);
+} })();
+render();
+if(topOrigin){ try{ window.top.postMessage({ycn:"hello"}, topOrigin); }catch(e){} }
+restoreFromTop().then(a=>a||restoreFromHash()).then(got=>{ boot(); if(S.auth){ $("loginArea").hidden=true; $("loginArea").innerHTML=""; if(got) render(); refresh(); hashSave(); } });
+})();
+
 </script>
 </body>
 </html>
