@@ -64,11 +64,16 @@ function isStandalone() {
 window.addEventListener("resize", sendInsets);
 window.addEventListener("orientationchange", function () { setTimeout(sendInsets, 300); });
 function ready() { if (shown) return; shown = true; document.getElementById("wait").className = "gone"; }
+/* 구글 서버가 잠들어 있으면 처음 열 때 10~20초 걸릴 수 있어요. 기다리는 동안 안내만 바꾸고,
+   30초가 지나도 안 열리면 그때 버튼을 보여줘요. 버튼을 보여준 뒤에도 앱이 열리면 바로 앱으로 바뀌어요. */
+setTimeout(function () {
+  if (!shown) document.getElementById("msg").textContent = "조금 오래 걸리고 있어요. 잠시만 기다려 주세요…";
+}, 8000);
 setTimeout(function () {
   if (shown) return;
   document.getElementById("wait").className = "slow";
-  document.getElementById("msg").textContent = "앱을 이 화면 안에서 열지 못했어요. 아래 버튼으로 열어 주세요.";
-}, 10000);
+  document.getElementById("msg").textContent = "앱이 열리지 않으면 아래 버튼을 눌러 주세요.";
+}, 30000);
 
 /* 로그인 기억: 아이폰은 안쪽 구글 화면의 저장 공간을 앱을 닫을 때 지워요.
    앱이 로그인 정보를 이 페이지에 맡기면 여기 저장해 두었다가, 다음에 열 때 돌려줘요. */
