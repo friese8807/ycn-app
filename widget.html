@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>윤호채원 위젯 설치</title>
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=4">
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--ink:#1b1f27;--muted:#5d6675;--line:#dfe3ea;--acc:#2f68d8;--code:#eef1f6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141b;--card:#1a202b;--ink:#eef2f7;--muted:#8b95a5;--line:#2a3140;--acc:#6c9cf5;--code:#0c1016}}
+:root[data-theme="dark"]{--bg:#10141b;--card:#1a202b;--ink:#eef2f7;--muted:#8b95a5;--line:#2a3140;--acc:#6c9cf5;--code:#0c1016}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;
+ padding:max(16px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
+main{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-size:22px;margin:4px 0 0} h2{font-size:16px;margin:0 0 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+ol,ul{margin:0;padding-left:20px} li{margin:4px 0}
+p{margin:0} .muted{color:var(--muted);font-size:13px}
+pre{background:var(--code);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12px;line-height:1.5;overflow:auto;max-height:240px;margin:10px 0 0;white-space:pre-wrap;word-break:break-all}
+button,a.btn{display:block;width:100%;border:0;border-radius:12px;background:var(--acc);color:#fff;font-size:16px;font-weight:700;padding:13px;text-align:center;text-decoration:none;margin-top:10px}
+a.btn.sec{background:var(--code);color:var(--ink);border:1px solid var(--line)}
+code{background:var(--code);border-radius:6px;padding:1px 6px;font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:14px} td{padding:6px 4px;border-top:1px solid var(--line);vertical-align:top} td:first-child{white-space:nowrap;font-weight:700;padding-right:10px}
+</style></head><body><main>
+<h1>윤호채원 위젯 설치</h1>
+<p class="muted">아이폰 홈 화면·잠금 화면에 이번 달 예상 용돈과 확인 대기 건수를 보여줘요. 15~30분마다 저절로 새로 고쳐지고, 누르면 앱이 열려요.</p>
+
+<div class="card"><h2>1. Scriptable 앱 설치 (무료)</h2>
+<a class="btn sec" href="https://apps.apple.com/app/scriptable/id1405459188">앱스토어에서 Scriptable 받기</a></div>
+
+<div class="card"><h2>2. 위젯 코드 복사</h2>
+<button id="copy">코드 복사하기</button>
+<pre id="code">// 윤호, 채원이네 위젯 — Scriptable 앱에 이 글 전체를 붙여넣어요.
+// ▼ 이 폰을 쓰는 사람: 아빠·엄마 폰은 &quot;parent&quot;, 윤호 폰은 &quot;yunho&quot;, 채원이 폰은 &quot;chaewon&quot;
+const WHO = &quot;parent&quot;;
+// ▼ 앱 로그인 비밀번호 (비밀번호를 안 정했으면 &quot;&quot; 그대로 두기)
+const PIN = &quot;&quot;;
+// ▼ 부모님 폰에서 내 이름 (&quot;아빠&quot; 또는 &quot;엄마&quot;)
+const NAME = &quot;아빠&quot;;
+
+// ---- 아래는 고치지 않아요. 위젯 본체를 인터넷에서 자동으로 받아 최신으로 유지해요. ----
+const fm = module.filename.includes(&quot;Documents/iCloud&quot;) || module.filename.includes(&quot;Mobile Documents&quot;) ? FileManager.iCloud() : FileManager.local();
+const dir = module.filename.slice(0, module.filename.lastIndexOf(&quot;/&quot;));
+const core = fm.joinPath(dir, &quot;ycn-widget-core.js&quot;);
+try {
+  const r = new Request(&quot;https://friese8807.github.io/ycn-app/widget-core.js?t=&quot; + Date.now());
+  r.timeoutInterval = 15;
+  const code = await r.loadString();
+  if (code.includes(&quot;YCN_WIDGET&quot;)) fm.writeString(core, code);
+} catch (e) {}
+if (fm.isFileStoredIniCloud(core) &amp;&amp; !fm.isFileDownloaded(core)) await fm.downloadFileFromiCloud(core);
+await importModule(&quot;ycn-widget-core&quot;)({ who: WHO, pin: PIN, name: NAME });
+</pre></div>
+
+<div class="card"><h2>3. Scriptable에 붙여넣기</h2>
+<ol>
+<li>Scriptable을 열고 오른쪽 위 <b>+</b>를 눌러요.</li>
+<li>빈 화면을 길게 눌러 <b>붙여넣기</b> 해요.</li>
+<li>맨 위 세 줄만 이 폰에 맞게 고쳐요.
+ <ul><li><code>WHO</code>: 부모님 폰은 <code>"parent"</code>, 윤호 폰은 <code>"yunho"</code>, 채원이 폰은 <code>"chaewon"</code></li>
+ <li><code>PIN</code>: 앱 로그인 비밀번호 (없으면 그대로)</li>
+ <li><code>NAME</code>: <code>"아빠"</code> 또는 <code>"엄마"</code></li></ul></li>
+<li>위쪽 제목을 눌러 이름을 <b>윤호채원</b>으로 바꾸고 <b>완료</b>를 눌러요.</li>
+<li>한 번 눌러 실행해서 미리보기가 나오는지 확인해요.</li>
+</ol></div>
+
+<div class="card"><h2>4. 홈 화면에 위젯 추가</h2>
+<ol>
+<li>홈 화면 빈 곳을 길게 누르고 왼쪽 위 <b>편집 → 위젯 추가</b>를 눌러요.</li>
+<li><b>Scriptable</b>을 찾아 크기를 골라 추가해요.</li>
+<li>추가된 위젯을 길게 눌러 <b>위젯 편집</b> → Script에서 <b>윤호채원</b>을 골라요.</li>
+</ol></div>
+
+<div class="card"><h2>크기별로 보이는 것</h2>
+<table>
+<tr><td>작게</td><td>두 아이 예상 용돈과 확인 대기 건수</td></tr>
+<tr><td>중간</td><td>두 아이 나란히: 사진, 예상 용돈, 상점·벌점, 대기 건수, 정산 D-day</td></tr>
+<tr><td>크게</td><td>중간 내용 + 오늘 기록 수와 가장 최근 기록</td></tr>
+<tr><td>잠금 화면</td><td>“윤호 501,000 · 채원 40,000”처럼 한 줄 또는 두 줄</td></tr>
+</table>
+<p class="muted" style="margin-top:8px">한 아이만 크게 보고 싶으면 위젯 편집의 <b>Parameter</b> 칸에 <code>윤호</code> 또는 <code>채원</code>을 적어요. 작은 위젯에 한 아이만 넣으면 오늘 기록과 최근 기록까지 보여요.</p></div>
+
+<div class="card"><h2>참고</h2>
+<ul>
+<li>비밀번호는 이 폰의 Scriptable 안에만 저장돼요.</li>
+<li>인터넷이 안 될 때는 마지막으로 받은 내용을 빨간 “연결 안 됨” 표시와 함께 보여줘요.</li>
+<li>위젯 모양은 앞으로 고쳐도 다시 붙여넣을 필요 없이 자동으로 바뀌어요.</li>
+</ul></div>
+<a class="btn sec" href="./">윤호채원 앱으로</a>
+</main>
+<script>
+document.getElementById("copy").onclick=async e=>{const t=document.getElementById("code").textContent;
+try{await navigator.clipboard.writeText(t);}catch(x){const r=document.createRange();r.selectNodeContents(document.getElementById("code"));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand("copy");}
+e.target.textContent="복사했어요 ✓";setTimeout(()=>e.target.textContent="코드 복사하기",2000);};
+</script>
+</body></html>

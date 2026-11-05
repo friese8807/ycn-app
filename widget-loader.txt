@@ -1,0 +1,20 @@
+// 윤호, 채원이네 위젯 — Scriptable 앱에 이 글 전체를 붙여넣어요.
+// ▼ 이 폰을 쓰는 사람: 아빠·엄마 폰은 "parent", 윤호 폰은 "yunho", 채원이 폰은 "chaewon"
+const WHO = "parent";
+// ▼ 앱 로그인 비밀번호 (비밀번호를 안 정했으면 "" 그대로 두기)
+const PIN = "";
+// ▼ 부모님 폰에서 내 이름 ("아빠" 또는 "엄마")
+const NAME = "아빠";
+
+// ---- 아래는 고치지 않아요. 위젯 본체를 인터넷에서 자동으로 받아 최신으로 유지해요. ----
+const fm = module.filename.includes("Documents/iCloud") || module.filename.includes("Mobile Documents") ? FileManager.iCloud() : FileManager.local();
+const dir = module.filename.slice(0, module.filename.lastIndexOf("/"));
+const core = fm.joinPath(dir, "ycn-widget-core.js");
+try {
+  const r = new Request("https://friese8807.github.io/ycn-app/widget-core.js?t=" + Date.now());
+  r.timeoutInterval = 15;
+  const code = await r.loadString();
+  if (code.includes("YCN_WIDGET")) fm.writeString(core, code);
+} catch (e) {}
+if (fm.isFileStoredIniCloud(core) && !fm.isFileDownloaded(core)) await fm.downloadFileFromiCloud(core);
+await importModule("ycn-widget-core")({ who: WHO, pin: PIN, name: NAME });
