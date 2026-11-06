@@ -215,6 +215,10 @@ padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:c
 .rule .cnt{top:4px;right:4px;min-width:18px;height:18px;font-size:10.5px;padding:0 5px}
 @media (min-width:520px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
+<script>(function(){var B="1794005855";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
+if(!/^[0-9]+$/.test(v)||v===B)return;try{if(sessionStorage.getItem("ycn-up")===v)return;sessionStorage.setItem("ycn-up",v)}catch(e){}
+location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}
+chk();document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
 </head>
 <body>
 <div id="sc"><div class="wrap">
