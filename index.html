@@ -706,13 +706,24 @@ h += `<div class="row"><div class="main"><b>${esc(r.label)}</b>${tags?`<div clas
 }
 if(!rules.length) h += `<div class="empty">항목이 없어요.</div>`;
 h += `</div><p class="note">벌점 항목은 금액을 음수로 적어요(예: −500). "하루 0회"는 제한 없음이에요.</p></section>
-<section class="group"><h2>보너스·벌칙 (자동 계산)</h2><div class="card">${(S.config?.bonuses||[]).map(b=>`<div class="row"><div class="main"><b>${esc(b.label)}</b><div class="sub">${b.type==="weeklyMiss"?`미달한 주마다 ${esc(kc.name)} 차감`:b.type==="weekly"?(b.per?`주 ${b.min}회 이상 하면 그 주 횟수 × 이 금액 (최대 ${b.cap||"-"}회) · 두 아이 공통`:"달성한 주마다 지급 · 두 아이 공통"):`한 달에 한 번 · 두 아이 공통${b.from?` · ${Number(b.from.slice(5,7))}월부터`:""}`}</div></div>
-<label class="chk"><input type="checkbox" id="bOn_${esc(b.id)}" ${b.off?"":"checked"}> 사용</label><input class="inp num mini" style="width:84px${b.type==="weeklyMiss"?";color:var(--minus)":""}" id="bAmt_${esc(b.id)}" type="number" inputmode="numeric" step="500" value="${b.type==="weeklyMiss"?-Math.abs(Number(b.amounts?.[k]??b.amount)||0):b.per?(Number(b.per)||0):(Number(b.amount)||0)}" aria-label="금액"><button class="ib solid" data-bsave="${esc(b.id)}">저장</button></div>`).join("")||`<div class="empty">보너스가 없어요.</div>`}</div></section>
-<section class="group"><h2>항목 추가</h2>
-<div class="inline"><input class="inp" id="nLabel" placeholder="예: 숙제 먼저 하기" style="flex:2 1 160px"><input class="inp num" id="nAmt" type="number" inputmode="numeric" step="500" placeholder="금액" style="flex:1 1 90px"></div>
-<div class="inline"><label class="chk"><input type="radio" name="nSign" value="1" checked> 상점</label><label class="chk"><input type="radio" name="nSign" value="-1"> 벌점</label><label class="chk"><input type="checkbox" id="nIly"> 일리 돌봄</label><label class="chk"><input type="checkbox" id="nKid" checked> 아이가 인증</label><label class="chk"><input type="checkbox" id="nPhoto"> 사진 필수</label><button class="ib solid" data-radd="1">추가</button></div>
-<p class="note">${esc(kc.name)}에게만 추가돼요.</p>
-</section>
+<section class="group"><h2>보너스·벌칙 (자동 계산)</h2><div class="card">${(S.config?.bonuses||[]).map(b=>{ const miss=b.type==="weeklyMiss";
+const v=miss?Math.abs(Number(b.amounts?.[k]??b.amount)||0):b.per?(Number(b.per)||0):(Number(b.amount)||0);
+const inp=`<input class="inp num mini" style="width:96px;display:inline-block${miss?";color:var(--minus)":""}" id="bAmt_${esc(b.id)}" type="number" inputmode="numeric" step="500" min="0" value="${v}" aria-label="${esc(b.label)} 금액">`;
+const say=miss?`그 주 용돈에서 ${inp}원 빼요 <span class="note">(${esc(kc.name)}만)</span>`:b.per?`그 주 산책 횟수 × ${inp}원 더 줘요 <span class="note">(최대 ${b.cap||"-"}회)</span>`:b.type==="weekly"?`그 주마다 ${inp}원 더 줘요`:`${inp}원 더 줘요${b.from?` <span class="note">(${Number(b.from.slice(5,7))}월부터)</span>`:""}`;
+return `<div style="padding:12px 14px;border-top:1px solid var(--line)${b.off?";opacity:.55":""}"><div style="display:flex;align-items:center;gap:8px"><b style="flex:1">${esc(b.label)}이면</b><label class="chk"><input type="checkbox" id="bOn_${esc(b.id)}" ${b.off?"":"checked"}> 켜기</label></div>
+<div style="margin-top:6px;line-height:2.4">${say}</div></div>`; }).join("")||`<div class="empty">보너스가 없어요.</div>`}</div>
+<p class="note">금액을 바꾸거나 켜기를 누르면 바로 저장돼요.</p></section>
+<section class="group"><h2>새 항목 만들기 · ${esc(kc.name)}</h2><div class="card" style="padding:14px;display:grid;gap:12px">
+<label style="display:grid;gap:6px"><b>1. 어떤 일인가요?</b><input class="inp" id="nLabel" placeholder="예: 숙제 먼저 하기"></label>
+<div style="display:grid;gap:6px"><b>2. 잘한 일인가요, 잘못한 일인가요?</b><div style="display:flex;gap:8px"><label class="chk" style="flex:1;justify-content:center;border:1px solid var(--line);border-radius:10px"><input type="radio" name="nSign" value="1" checked> 👍 잘했어요 (상점)</label><label class="chk" style="flex:1;justify-content:center;border:1px solid var(--line);border-radius:10px"><input type="radio" name="nSign" value="-1"> 👎 잘못했어요 (벌점)</label></div></div>
+<div style="display:grid;gap:6px"><b>3. 얼마인가요?</b><div style="display:flex;gap:6px;align-items:center"><input class="inp num" id="nAmt" type="number" inputmode="numeric" step="500" min="0" placeholder="금액" style="flex:1">원</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap">${[500,1000,3000,5000].map(n=>`<button class="ib" data-namt="${n}">${n.toLocaleString()}원</button>`).join("")}</div></div>
+<div style="display:grid;gap:2px"><b>4. 더 정할 것 (선택)</b>
+<label class="chk"><input type="checkbox" id="nKid" checked> 아이가 직접 체크할 수 있어요</label>
+<label class="chk"><input type="checkbox" id="nPhoto"> 체크할 때 사진을 찍어야 해요</label>
+<label class="chk"><input type="checkbox" id="nIly"> 일리를 돌보는 일이에요</label></div>
+<button class="btn" data-radd="1">${esc(kc.name)}에게 추가하기</button></div>
+<p class="note">벌점은 부모님만 기록할 수 있어요.</p></section>
 ${accessHTML()}
 <section class="group"><button class="btn ghost" data-logout="1">로그아웃 (${esc(S.auth?.name||"")})</button>
 <p class="note">기록은 구글 시트에 저장돼요. 시트에서 직접 고친 내용은 앱을 새로고침하면 반영돼요.</p></section></div>`;
@@ -945,12 +956,13 @@ if(d.radd){ const label=$("nLabel").value.trim(); const amt=Math.abs(Math.round(
 const sign=Number(document.querySelector('input[name="nSign"]:checked').value);
 if(!label||!amt){ toast("이름과 금액을 입력해 주세요"); return; } b.disabled=true;
 await act(call("saveRule",{kid:curKid(),rule:{label,amount:sign*amt,ily:$("nIly").checked,kidOk:sign>0&&$("nKid").checked,photo:$("nPhoto").checked,max:sign>0?1:0}}),"추가했어요"); return; }
-if(d.bsave){ const list=JSON.parse(JSON.stringify(S.config?.bonuses||[])); const x=list.find(z=>z.id===d.bsave); if(!x) return;
-const bv=Math.abs(Math.round(Number($("bAmt_"+d.bsave).value)||0)); if(x.type==="weeklyMiss"){ x.amounts=Object.assign({},x.amounts,{[curKid()]:bv}); } else if(x.per) x.per=bv; else x.amount=bv; x.off=!$("bOn_"+d.bsave).checked; b.disabled=true;
-await act(call("saveSettings",{settings:{bonuses:list}}),"보너스를 저장했어요"); return; }
+if(d.namt){ $("nAmt").value=d.namt; return; }
 });
 document.addEventListener("change", async ev => {
 const t=ev.target;
+if(/^b(On|Amt)_/.test(t.id||"")){ const id=t.id.replace(/^b(On|Amt)_/,""); const list=JSON.parse(JSON.stringify(S.config?.bonuses||[])); const x=list.find(z=>z.id===id); if(!x) return;
+const bv=Math.abs(Math.round(Number($("bAmt_"+id).value)||0)); if(x.type==="weeklyMiss"){ x.amounts=Object.assign({},x.amounts,{[curKid()]:bv}); } else if(x.per) x.per=bv; else x.amount=bv; x.off=!$("bOn_"+id).checked;
+await act(call("saveSettings",{settings:{bonuses:list}}),"저장했어요"); return; }
 if(t.id==="floorChk"){ await act(call("saveSettings",{settings:{floorZero:t.checked}})); return; }
 if(t.dataset?.target && t.files?.[0]){
 const target=t.dataset.target; toast("사진 올리는 중…");
