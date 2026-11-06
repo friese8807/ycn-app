@@ -224,6 +224,7 @@ function route_(req) {
   if (a === 'login' || a === 'load') logAccess_(req, me);
   if (a === 'login') return { role: me.role, name: me.name };
   if (a === 'load') return load_(String(req.month || ''), me, st);
+  if (a === 'access') return access_(me);
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
@@ -256,6 +257,16 @@ function logAccess_(req, me) {
     sh.getRange(2, 1, 1, 5).setValues([[Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm:ss'), who === 'parent' ? '부모' : '아이', safe_(me.name, 20), via, dev]]);
     if (sh.getLastRow() &gt; 3001) sh.deleteRows(3002, sh.getLastRow() - 3001);
   } catch (e) {}
+}
+
+function access_(me) {
+  parentOnly_(me);
+  const sh = book_().getSheetByName(SH.ACC);
+  if (!sh || sh.getLastRow() &lt; 2) return { rows: [] };
+  const n = Math.min(40, sh.getLastRow() - 1);
+  return { rows: sh.getRange(2, 1, n, 5).getValues().map(function (r) {
+    return { t: dstr_(r[0], 'yyyy-MM-dd HH:mm:ss'), who: String(r[1]), name: String(r[2]), via: String(r[3]), dev: String(r[4]) };
+  }) };
 }
 
 function load_(month, me, st) {

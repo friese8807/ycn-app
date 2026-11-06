@@ -651,6 +651,24 @@ h += `<button class="btn ${ac?.no?"ghost":""}" data-pay="1" ${t.wn?"disabled":""
 }else h += `<p class="note">매달 말일에 부모님이 정산해서 지급해요.</p>`;
 $("view").innerHTML = h+`</div>`;
 }
+function accessHTML(){
+if(S.acc===undefined){ S.acc="loading"; loadAccess(); }
+const rows=Array.isArray(S.acc)?S.acc:[];
+const when=t=>{ const d=t.slice(0,10), td=TODAY; const hm=t.slice(11,16); if(d===td) return "오늘 "+hm;
+ const y=new Date(new Date(td+"T00:00:00").getTime()-864e5); const yd=`${y.getFullYear()}-${pad(y.getMonth()+1)}-${pad(y.getDate())}`;
+ return (d===yd?"어제 ":Number(d.slice(5,7))+"/"+Number(d.slice(8,10))+" ")+hm; };
+let body;
+if(S.acc==="loading") body=`<div class="empty">불러오는 중…</div>`;
+else if(S.acc==="err") body=`<div class="empty">불러오지 못했어요. 서버 코드를 최신으로 바꿨는지 확인해 주세요.</div>`;
+else if(!rows.length) body=`<div class="empty">아직 기록이 없어요.</div>`;
+else body=rows.map(r=>`<div class="row"><div class="main"><b>${esc(r.name||r.who)}</b><div class="sub">${esc([r.via,r.dev].filter(Boolean).join(" · "))}</div></div><span class="note num">${esc(when(r.t))}</span></div>`).join("");
+return `<section class="group"><h2 style="display:flex;align-items:center">최근 접속<span style="flex:1"></span><button class="ib" data-loadacc="1">새로고침</button></h2><div class="card">${body}</div>
+<p class="note">최근 40건이에요. 같은 사람·기기는 10분에 한 번만 기록돼요. 전체 기록은 구글 시트 '접속' 탭에 있어요.</p></section>`;
+}
+function loadAccess(){
+call("access").then(d=>{ S.acc=d.rows||[]; }).catch(()=>{ S.acc="err"; })
+.then(()=>{ if(S.tab==="setup" && !sheetOpen()) render(); });
+}
 function renderSetup(){
 const k=curKid(); const kc = kidCfg(k) || {name:kidName(k), base:0, rules:[]};
 const rules = [...(kc.rules||[])].sort((a,b)=>(b.amount>0)-(a.amount>0) || (!!a.ily)-(!!b.ily) || Math.abs(a.amount)-Math.abs(b.amount));
@@ -701,6 +719,7 @@ h += `</div><p class="note">벌점 항목은 금액을 음수로 적어요(예: 
 <div class="inline"><label class="chk"><input type="radio" name="nSign" value="1" checked> 상점</label><label class="chk"><input type="radio" name="nSign" value="-1"> 벌점</label><label class="chk"><input type="checkbox" id="nIly"> 일리 돌봄</label><label class="chk"><input type="checkbox" id="nKid" checked> 아이가 인증</label><label class="chk"><input type="checkbox" id="nPhoto"> 사진 필수</label><button class="ib solid" data-radd="1">추가</button></div>
 <p class="note">${esc(kc.name)}에게만 추가돼요.</p>
 </section>
+${accessHTML()}
 <section class="group"><button class="btn ghost" data-logout="1">로그아웃 (${esc(S.auth?.name||"")})</button>
 <p class="note">기록은 구글 시트에 저장돼요. 시트에서 직접 고친 내용은 앱을 새로고침하면 반영돼요.</p></section></div>`;
 $("view").innerHTML = h;
@@ -919,6 +938,7 @@ if(d.saveacct){ const bank=$("bankInp").value.trim().slice(0,20); const no=$("ac
 await act(call("saveSettings",{settings:{["bank_"+curKid()]:bank,["acct_"+curKid()]:no}}),"계좌를 저장했어요"); return; }
 if(d.copyacct){ const ac=S.config?.accounts?.[d.copyacct]; const t=totals(d.copyacct); const txt=`${ac.bank} ${ac.no} ${t.pay}`;
 try{ await navigator.clipboard.writeText(txt); toast("복사했어요: "+txt); }catch(e){ toast(txt); } return; }
+if(d.loadacc){ S.acc="loading"; render(); loadAccess(); return; }
 if(d.redit){ S.editRule=d.redit; render(); return; }
 if(d.rcancel){ S.editRule=null; render(); return; }
 if(d.rsave){ const label=$("eLabel").value.trim(); const amt=Math.round(Number($("eAmt").value));
