@@ -2,8 +2,12 @@
 // 이 파일은 위젯이 실행될 때마다 자동으로 새 버전을 받아요. 직접 고칠 필요 없어요.
 const EXEC = "https://script.google.com/macros/s/AKfycbzhbaZtMcPyhMlsOBEt1cqps72dyTTdhso3vsjWXAA69xLrck1xABlOnCCfZMnQRISg/exec";
 const APP = "https://friese8807.github.io/ycn-app/";
-const KIDS = [{ id: "yunho", short: "윤호", color: "#6c9cf5" }, { id: "chaewon", short: "채원", color: "#ee7fbe" }];
-const C = { bg: "#10141b", card: "#1a202b", ink: "#eef2f7", muted: "#8b95a5", plus: "#4cc28b", minus: "#f07373", warn: "#e6a35c" };
+// 낮(6~19시)과 밤에 따라 배경 그림과 글자색을 바꿔요.
+const HOUR = new Date().getHours(); const DAY = HOUR >= 6 && HOUR < 19;
+const KIDS = [{ id: "yunho", short: "윤호", color: DAY ? "#1f55c4" : "#8fb4ff" }, { id: "chaewon", short: "채원", color: DAY ? "#b8337f" : "#ff9bd2" }];
+const C = DAY
+  ? { bg: "#5fa8ee", card: "#ffffff", cardA: 0.66, ink: "#14181f", muted: "#3d4655", plus: "#147a4c", minus: "#c42f2f", warn: "#a85f12" }
+  : { bg: "#0b1430", card: "#0b1020", cardA: 0.62, ink: "#f4f7fb", muted: "#b7c0cf", plus: "#5fd69d", minus: "#ff8a8a", warn: "#ffc65c" };
 
 /* ---------- 계산 (앱과 같은 규칙) ---------- */
 const pad = n => String(n).padStart(2, "0");
@@ -76,10 +80,10 @@ async function photo(id, auth, S) {
 }
 
 // 배경: 앱 맨 위 아파트 그림 (한 번 받아서 저장해 두고 써요)
-const BG_VER = 1;
+const BG_VER = 2;
 async function bgImage(name, S) {
-  const key = `bg-${name}-v${BG_VER}`; let d = S.get(key);
-  if (!d) { try { const r = new Request(APP + `widget-bg-${name}.png?v=${BG_VER}`); r.timeoutInterval = 15; d = (await r.load()).toBase64String(); S.set(key, d); } catch (e) { return null; } }
+  const mode = DAY ? "day" : "night"; const key = `bg-${mode}-${name}-v${BG_VER}`; let d = S.get(key);
+  if (!d) { try { const r = new Request(APP + `widget-bg-${mode}-${name}.png?v=${BG_VER}`); r.timeoutInterval = 15; d = (await r.load()).toBase64String(); S.set(key, d); } catch (e) { return null; } }
   try { return Image.fromData(Data.fromBase64String(d)); } catch (e) { return null; }
 }
 
@@ -105,11 +109,11 @@ function avatar(st, img, kid, size) {
   txt(s, kid.short.slice(0, 1), size * 0.5, "#ffffff", "b");
 }
 function kidBlock(parent, r, kid, img, opt) {
-  const box = parent.addStack(); box.layoutVertically(); box.backgroundColor = new Color(C.card, 0.84); box.cornerRadius = 14;
+  const box = parent.addStack(); box.layoutVertically(); box.backgroundColor = new Color(C.card, C.cardA); box.cornerRadius = 14;
   box.setPadding(8, 10, 8, 10); box.url = openURL();
   const top = box.addStack(); top.centerAlignContent(); avatar(top, img, kid, opt.av); top.addSpacer(6);
   txt(top, kid.short, opt.name, C.ink, "b"); top.addSpacer();
-  if (r.wn && opt.parent) { const b = top.addStack(); b.backgroundColor = new Color(C.warn); b.cornerRadius = 8; b.setPadding(1, 6, 1, 6); txt(b, "대기 " + r.wn, 10, "#1b1f27", "b"); }
+  if (r.wn && opt.parent) { const b = top.addStack(); b.backgroundColor = new Color(C.warn); b.cornerRadius = 8; b.setPadding(1, 6, 1, 6); txt(b, "대기 " + r.wn, 10, DAY ? "#ffffff" : "#1b1f27", "b"); }
   else if (r.paid) txt(top, "지급완료", 10, C.plus, "b");
   box.addSpacer(4);
   txt(box, krw(r.pay), opt.big, kid.color, "h");
