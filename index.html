@@ -164,6 +164,8 @@ background:linear-gradient(180deg,var(--sky1) 0,var(--sky2) 100%);border:1px sol
 .btn{border:0;border-radius:12px;padding:13px 16px;font-weight:700;background:var(--kid);color:var(--on-kid);width:100%}
 .btn.ghost{background:var(--surface-2);color:var(--ink)}
 .btn:disabled{opacity:.45;cursor:default}
+a.btn{display:block;box-sizing:border-box;text-align:center;text-decoration:none}
+.btn.toss{background:#0064ff;color:#fff}
 .note{font-size:13px;color:var(--muted);margin:0;text-align:center}
 
 .field{display:flex;flex-direction:column;gap:4px}
@@ -376,6 +378,9 @@ const ilyHead = () => { const u=photoFor("ily"); return `<div class="ilyh">${u?`
 const isKid = () => S.mode==="kid";
 const curKid = () => isKid() ? S.self : S.kid;
 const kidCfg = (k=curKid()) => S.config?.kids?.[k] || null;
+const DEFAULT_BANK = {yunho:"카카오뱅크", chaewon:"토스뱅크"};
+/* 토스 송금 화면을 받는 계좌·금액이 채워진 채로 열어요. 출금 계좌(기업은행)는 토스에서 골라요. */
+function tossURL(ac, amount){ return "supertoss://send?bank="+encodeURIComponent(ac.bank||"")+"&accountNo="+encodeURIComponent(String(ac.no||"").replace(/[^0-9]/g,""))+"&amount="+Math.round(amount); }
 const vacMonths = () => String(S.config?.vacMonths||"").split(/[^0-9]+/).filter(Boolean).map(Number);
 function isVac(k=curKid(), month=S.month){ return (Number(kidCfg(k)?.baseVac)||0)>0 && vacMonths().includes(Number(month.slice(5,7))); }
 function kidBase(k=curKid(), month=S.month){ const c=kidCfg(k)||{}; return isVac(k,month) ? Number(c.baseVac)||0 : Number(c.base)||0; }
@@ -631,7 +636,11 @@ if(!isKid()) h += `<button class="btn ghost" data-unpay="1">지급 취소 (기�
 }else if(!isKid()){
 const last = new Date(Number(S.month.slice(0,4)), Number(S.month.slice(5,7)), 0).getDate();
 const early = S.month===THIS_MONTH && Number(TODAY.slice(8))<last;
-h += `<button class="btn" data-pay="1" ${t.wn?"disabled":""}>${krw(t.pay)} 지급 완료</button>
+const ac = S.config?.accounts?.[k];
+if(ac?.no && t.pay>0) h += `<a class="btn toss" href="${esc(tossURL(ac,t.pay))}">토스로 ${krw(t.pay)} 보내기</a>
+<div class="inline" style="justify-content:center"><span class="note">${esc(ac.bank)} ${esc(ac.no)}</span><button class="ib" data-copyacct="${esc(k)}">계좌·금액 복사</button></div>`;
+else h += `<p class="note">설정 탭에 ${esc(kidShort(k))} 계좌를 넣으면 토스로 바로 보낼 수 있어요.</p>`;
+h += `<button class="btn ${ac?.no?"ghost":""}" data-pay="1" ${t.wn?"disabled":""}>${ac?.no?"송금했어요 · ":""}${krw(t.pay)} 지급 완료</button>
 <p class="note">${t.wn?"승인 대기 건을 먼저 승인하거나 반려해 주세요. ":""}${early?`정산일은 ${Number(S.month.slice(5,7))}월 ${last}일이에요. `:""}지급 완료하면 이 달 기록이 잠겨요.</p>`;
 }else h += `<p class="note">매달 말일에 부모님이 정산해서 지급해요.</p>`;
 $("view").innerHTML = h+`</div>`;
@@ -658,6 +667,10 @@ let h = `<div class="stack">
 <div class="inline"><span class="note" style="min-width:56px">방학 달</span><input class="inp" id="vacInp" inputmode="numeric" value="${esc(S.config?.vacMonths||"1,2,7,8")}" placeholder="예: 1,2,7,8" style="flex:1"><button class="ib solid" data-savebase="1">저장</button></div>
 <p class="note">방학 달에는 방학 용돈이 기본 용돈이 돼요. 방학 달은 두 아이 공통이에요.</p>
 <label class="chk"><input type="checkbox" id="floorChk" ${S.config?.floorZero!==false?"checked":""}> 벌점이 많아도 지급액은 0원 아래로 내려가지 않게 (두 아이 공통)</label>
+</section>
+<section class="group"><h2>${esc(kc.name)} 용돈 받을 계좌</h2>
+<div class="inline"><input class="inp" id="bankInp" value="${esc(S.config?.accounts?.[k]?.bank||DEFAULT_BANK[k]||"")}" placeholder="은행" style="flex:1 1 100px" aria-label="은행"><input class="inp num" id="acctInp" inputmode="numeric" value="${esc(S.config?.accounts?.[k]?.no||"")}" placeholder="계좌번호" style="flex:2 1 160px" aria-label="계좌번호"><button class="ib solid" data-saveacct="1">저장</button></div>
+<p class="note">정산 탭에서 토스 송금 화면이 이 계좌와 금액으로 채워져 열려요. 부모님만 볼 수 있어요.</p>
 </section>
 <section class="group"><h2>${esc(kc.name)} 상벌 항목</h2><div class="card">`;
 for(const r of rules){
@@ -896,6 +909,10 @@ if(d.clearpin){ b.disabled=true; await act(call("setPin",{target:d.clearpin,pin:
 if(d.savebase){ const v=Math.max(0,Math.round(Number($("baseInp").value)||0)); const vv=Math.max(0,Math.round(Number($("baseVacInp").value)||0));
 const vm=$("vacInp").value.split(/[^0-9]+/).map(Number).filter(n=>n>=1&&n<=12).join(","); b.disabled=true;
 await act(call("saveSettings",{settings:{["base_"+curKid()]:v,["baseVac_"+curKid()]:vv,vacMonths:vm}}),"기본 용돈을 저장했어요"); return; }
+if(d.saveacct){ const bank=$("bankInp").value.trim().slice(0,20); const no=$("acctInp").value.replace(/[^0-9-]/g,"").slice(0,30); b.disabled=true;
+await act(call("saveSettings",{settings:{["bank_"+curKid()]:bank,["acct_"+curKid()]:no}}),"계좌를 저장했어요"); return; }
+if(d.copyacct){ const ac=S.config?.accounts?.[d.copyacct]; const t=totals(d.copyacct); const txt=`${ac.bank} ${ac.no} ${t.pay}`;
+try{ await navigator.clipboard.writeText(txt); toast("복사했어요: "+txt); }catch(e){ toast(txt); } return; }
 if(d.redit){ S.editRule=d.redit; render(); return; }
 if(d.rcancel){ S.editRule=null; render(); return; }
 if(d.rsave){ const label=$("eLabel").value.trim(); const amt=Math.round(Number($("eAmt").value));

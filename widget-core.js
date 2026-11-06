@@ -95,6 +95,22 @@ async function openApp() {
   await wv.present(true);
 }
 
+// 말일 저녁 8시에 정산 알림을 걸어둬요. 알림을 길게 누르면 아이별 토스 송금 버튼이 나와요.
+function tossURL(ac, amount) { return "supertoss://send?bank=" + encodeURIComponent(ac.bank || "") + "&accountNo=" + encodeURIComponent(String(ac.no || "").replace(/[^0-9]/g, "")) + "&amount=" + Math.round(amount); }
+async function settleNotice(cur, prev, S) {
+  const [y, m] = cur.month.split("-").map(Number); const lastD = new Date(y, m, 0).getDate();
+  const at = new Date(y, m - 1, lastD, 20, 0, 0); if (at < new Date()) return;
+  const rs = KIDS.map(k => [k, compute(cur, prev, k.id)]).filter(([, r]) => !r.paid);
+  const id = "ycn-settle-" + cur.month;
+  if (!rs.length) { Notification.removePending([id]); return; }
+  const body = rs.map(([k, r]) => `${k.short} ${krw(r.pay)}`).join(" · ");
+  if (S.get("notice") === id + body) return;
+  const n = new Notification(); n.identifier = id; n.threadIdentifier = "ycn";
+  n.title = `${m}월 용돈 정산할 시간이에요`; n.body = body + "\n길게 눌러 토스로 바로 보내요."; n.openURL = openURL();
+  for (const [k, r] of rs) { const ac = cur.config?.accounts?.[k.id]; if (ac && ac.no && r.pay > 0) n.addAction(`${k.short}에게 토스로 ${krw(r.pay)}`, tossURL(ac, r.pay)); }
+  n.setTriggerDate(at); await n.schedule(); S.set("notice", id + body);
+}
+
 /* ---------- 그리기 ---------- */
 const won = n => (n < 0 ? "−" : "") + Math.abs(Math.round(n)).toLocaleString("ko-KR");
 const krw = n => won(n) + "원";
@@ -166,6 +182,7 @@ async function build(opts) {
   const bg = await bgImage(bgName, S); if (bg) w.backgroundImage = bg;
   if (!cur) { txt(w, "윤호, 채원이네", 14, C.ink, "b"); w.addSpacer(6); txt(w, "불러오지 못했어요", 12, C.minus, "m"); const t = w.addText(err.slice(0, 80)); t.font = Font.systemFont(10); t.textColor = new Color(C.muted); return w; }
 
+  if (parent && !stale) { try { await settleNotice(cur, prev, S); } catch (e) {} }
   header(w, cur, family); w.addSpacer(6);
   const rs = []; for (const k of kids) rs.push([k, compute(cur, prev, k.id), await photo(cur.config?.kids?.[k.id]?.photo, auth, S)]);
   if (family === "small") {

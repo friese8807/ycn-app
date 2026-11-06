@@ -22,7 +22,7 @@ code{background:var(--code);border-radius:6px;padding:1px 6px;font-size:13px}
 table{border-collapse:collapse;width:100%;font-size:14px} td{padding:6px 4px;border-top:1px solid var(--line);vertical-align:top} td:first-child{white-space:nowrap;font-weight:700;padding-right:10px}
 </style></head><body><main>
 <h1>서버 코드 업데이트</h1>
-<p class="muted">사진 없이 인증하기, 방학 용돈 기능을 켜려면 구글 앱스크립트 코드를 한 번 바꿔야 해요. PC에서 하는 게 편해요.</p>
+<p class="muted">사진 없이 인증하기, 방학 용돈, 토스 송금 계좌 기능을 켜려면 구글 앱스크립트 코드를 한 번 바꿔야 해요. PC에서 하는 게 편해요.</p>
 <div class="card"><h2>1. 코드 복사</h2><button id="copy">코드 복사하기</button><pre id="code">/**
  * 윤호, 채원이네 — 상벌 통장 (Google Apps Script 서버)
  * 이 스크립트는 &#x27;윤호, 채원이네 상벌 통장&#x27; 구글 시트에 붙어서(확장 프로그램 &gt; Apps Script) 동작합니다.
@@ -256,12 +256,18 @@ function load_(month, me, st) {
   const led = {};
   ledger_().forEach(function (l) { if (l.month === month &amp;&amp; (!me.kid || l.kid === me.kid)) led[l.kid + &#x27;_&#x27; + l.month] = clean_(l); });
   return {
-    config: { kids: kids, bonuses: bonuses, vacMonths: String(st.vacMonths || &#x27;&#x27;), floorZero: st.floorZero === &#x27;&#x27; || st.floorZero == null ? true : bool_(st.floorZero),
+    config: { kids: kids, bonuses: bonuses, vacMonths: String(st.vacMonths || &#x27;&#x27;),
+      accounts: me.role === &#x27;parent&#x27; ? accounts_(st) : {}, floorZero: st.floorZero === &#x27;&#x27; || st.floorZero == null ? true : bool_(st.floorZero),
       ily: String(st.photo_ily || &#x27;&#x27;), bg: String(st.photo_bg || &#x27;&#x27;), hasParentPin: !!st.parentPinHash },
     entries: ents, ledger: led, today: today_(), month: month, me: me
   };
 }
 
+function accounts_(st) {
+  const o = {};
+  KIDS.forEach(function (k) { o[k] = { bank: String(st[&#x27;bank_&#x27; + k] || &#x27;&#x27;), no: String(st[&#x27;acct_&#x27; + k] || &#x27;&#x27;) }; });
+  return o;
+}
 function image_(req, st) {
   const id = String(req.id || &#x27;&#x27;);
   if (!id) throw fail_(&#x27;bad&#x27;, &#x27;사진 정보가 없어요&#x27;);
@@ -378,6 +384,10 @@ function saveSettings_(req, me) {
   KIDS.forEach(function (k) {
     if (s[&#x27;base_&#x27; + k] != null) setSetting_(&#x27;base_&#x27; + k, Math.max(0, Math.round(Number(s[&#x27;base_&#x27; + k]) || 0)));
     if (s[&#x27;baseVac_&#x27; + k] != null) setSetting_(&#x27;baseVac_&#x27; + k, Math.max(0, Math.round(Number(s[&#x27;baseVac_&#x27; + k]) || 0)));
+  });
+  KIDS.forEach(function (k) {
+    if (s[&#x27;bank_&#x27; + k] != null) setSetting_(&#x27;bank_&#x27; + k, String(s[&#x27;bank_&#x27; + k]).slice(0, 20));
+    if (s[&#x27;acct_&#x27; + k] != null) setSetting_(&#x27;acct_&#x27; + k, String(s[&#x27;acct_&#x27; + k]).replace(/[^0-9-]/g, &#x27;&#x27;).slice(0, 30));
   });
   if (s.vacMonths != null) setSetting_(&#x27;vacMonths&#x27;, String(s.vacMonths).replace(/[^0-9,]/g, &#x27;&#x27;).slice(0, 40));
   if (s.floorZero != null) setSetting_(&#x27;floorZero&#x27;, !!s.floorZero);
