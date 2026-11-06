@@ -91,7 +91,7 @@ async function bgImage(name, S) {
 function openURL() { try { return "scriptable:///run/" + encodeURIComponent(Script.name()) + "?open=1"; } catch (e) { return APP; } }
 async function openApp() {
   const wv = new WebView();
-  await wv.loadURL(APP);
+  await wv.loadURL(APP + "?via=widget");
   await wv.present(true);
 }
 

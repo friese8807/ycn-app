@@ -332,16 +332,22 @@ function apiFetch(body){
   return fetch(EXEC_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body),redirect:"follow"})
     .then(r=>r.text()).then(t=>{ try{ return JSON.parse(t); }catch(e){ const err=new Error("noapi"); err.noapi=true; throw err; } });
 }
+/* 접속 기록용: 어떤 기기·방식으로 들어왔는지 */
+const META=(()=>{ const u=navigator.userAgent||""; let dev="기타";
+ if(/iPhone/.test(u)) dev="iPhone"; else if(/iPad/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1)) dev="iPad"; else if(/Android/.test(u)) dev="Android"; else if(/Macintosh/.test(u)) dev="Mac"; else if(/Windows/.test(u)) dev="Windows";
+ const v=(u.match(/OS (\d+)[_.]/)||[])[1]; if(v&&/iP/.test(dev)) dev+=" iOS "+v;
+ let via="브라우저"; try{ if(new URLSearchParams(location.search).get("via")==="widget") via="위젯"; else if(navigator.standalone||matchMedia("(display-mode: standalone)").matches) via="홈화면 앱"; }catch(e){}
+ return {dev, via}; })();
 function call(action, payload={}){
 return new Promise((resolve,reject)=>{
-if(!window.google?.script?.run){ apiFetch(Object.assign({}, payload, {action, auth:S.auth}))
+if(!window.google?.script?.run){ apiFetch(Object.assign({}, payload, {action, auth:S.auth, meta:META}))
   .then(res=>{ if(res&&res.ok) resolve(res.data); else reject(res||{code:"error",message:"처리하지 못했어요"}); })
   .catch(e=>{ if(e&&e.noapi&&!window.__fellback){ window.__fellback=1; location.replace("frame.html"); }
     reject({code:"network",message:"서버에 연결하지 못했어요. 잠시 후 다시 해주세요."}); }); return; }
 google.script.run
 .withSuccessHandler(res=>{ if(res&&res.ok) resolve(res.data); else reject(res||{code:"error",message:"처리하지 못했어요"}); })
 .withFailureHandler(e=>reject({code:"network",message:"서버에 연결하지 못했어요. 잠시 후 다시 해주세요."}))
-.api(Object.assign({}, payload, {action, auth:S.auth}));
+.api(Object.assign({}, payload, {action, auth:S.auth, meta:META}));
 });
 }
 function onErr(e){

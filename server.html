@@ -25,40 +25,41 @@ table{border-collapse:collapse;width:100%;font-size:14px} td{padding:6px 4px;bor
 <p class="muted">사진 없이 인증하기, 방학 용돈, 토스 송금 계좌 기능을 켜려면 구글 앱스크립트 코드를 한 번 바꿔야 해요. PC에서 하는 게 편해요.</p>
 <div class="card"><h2>1. 코드 복사</h2><button id="copy">코드 복사하기</button><pre id="code">/**
  * 윤호, 채원이네 — 상벌 통장 (Google Apps Script 서버)
- * 이 스크립트는 &#x27;윤호, 채원이네 상벌 통장&#x27; 구글 시트에 붙어서(확장 프로그램 &gt; Apps Script) 동작합니다.
- * 배포: 배포 &gt; 새 배포 &gt; 유형 &#x27;웹 앱&#x27; &gt; 실행: 나 / 액세스: 모든 사용자
+ * 이 스크립트는 '윤호, 채원이네 상벌 통장' 구글 시트에 붙어서(확장 프로그램 &gt; Apps Script) 동작합니다.
+ * 배포: 배포 &gt; 새 배포 &gt; 유형 '웹 앱' &gt; 실행: 나 / 액세스: 모든 사용자
  */
-const SH = { SET: &#x27;설정&#x27;, RULE: &#x27;규칙&#x27;, LOG: &#x27;기록&#x27;, PAY: &#x27;정산&#x27; };
+const SH = { SET: '설정', RULE: '규칙', LOG: '기록', PAY: '정산', ACC: '접속' };
 const COLS = {
-  SET: [&#x27;키&#x27;, &#x27;값&#x27;],
-  RULE: [&#x27;아이&#x27;, &#x27;id&#x27;, &#x27;항목&#x27;, &#x27;금액&#x27;, &#x27;일리&#x27;, &#x27;아이인증&#x27;, &#x27;하루최대&#x27;, &#x27;사진필수&#x27;],
-  LOG: [&#x27;id&#x27;, &#x27;아이&#x27;, &#x27;날짜&#x27;, &#x27;시각&#x27;, &#x27;규칙id&#x27;, &#x27;항목&#x27;, &#x27;금액&#x27;, &#x27;메모&#x27;, &#x27;사진&#x27;, &#x27;사진해시&#x27;, &#x27;입력&#x27;, &#x27;상태&#x27;, &#x27;반려사유&#x27;, &#x27;기록자&#x27;, &#x27;검토자&#x27;, &#x27;검토시각&#x27;],
-  PAY: [&#x27;아이&#x27;, &#x27;월&#x27;, &#x27;지급&#x27;, &#x27;지급일&#x27;, &#x27;기본&#x27;, &#x27;상점&#x27;, &#x27;벌점&#x27;, &#x27;보너스&#x27;, &#x27;지급액&#x27;, &#x27;처리자&#x27;]
+  SET: ['키', '값'],
+  RULE: ['아이', 'id', '항목', '금액', '일리', '아이인증', '하루최대', '사진필수'],
+  LOG: ['id', '아이', '날짜', '시각', '규칙id', '항목', '금액', '메모', '사진', '사진해시', '입력', '상태', '반려사유', '기록자', '검토자', '검토시각'],
+  PAY: ['아이', '월', '지급', '지급일', '기본', '상점', '벌점', '보너스', '지급액', '처리자'],
+  ACC: ['시각', '누구', '이름', '방식', '기기']
 };
-const KIDS = [&#x27;yunho&#x27;, &#x27;chaewon&#x27;];
-const PHOTO_KEYS = [&#x27;photo_yunho&#x27;, &#x27;photo_chaewon&#x27;, &#x27;photo_ily&#x27;, &#x27;photo_bg&#x27;];
+const KIDS = ['yunho', 'chaewon'];
+const PHOTO_KEYS = ['photo_yunho', 'photo_chaewon', 'photo_ily', 'photo_bg'];
 
 function doGet() {
   // 화면 파일(Index.html)은 시트와 같은 드라이브 폴더에서 가장 최근 것을 읽어요.
   // 폴더에 없으면 이 프로젝트 안의 Index 파일을 씁니다.
-  var html = &#x27;&#x27;;
-  try { html = appParts_(); } catch (e) { html = &#x27;&#x27;; }
+  var html = '';
+  try { html = appParts_(); } catch (e) { html = ''; }
   if (!html) {
     try {
       var file = appFile_();
-      if (file) html = file.getBlob().getDataAsString(&#x27;UTF-8&#x27;);
-    } catch (e) { html = &#x27;&#x27;; }
+      if (file) html = file.getBlob().getDataAsString('UTF-8');
+    } catch (e) { html = ''; }
   }
-  var out = html ? HtmlService.createHtmlOutput(html) : HtmlService.createHtmlOutputFromFile(&#x27;Index&#x27;);
-  return out.setTitle(&#x27;윤호, 채원이네&#x27;)
-    .addMetaTag(&#x27;viewport&#x27;, &#x27;width=device-width, initial-scale=1, viewport-fit=cover&#x27;)
-    .addMetaTag(&#x27;apple-mobile-web-app-capable&#x27;, &#x27;yes&#x27;)
+  var out = html ? HtmlService.createHtmlOutput(html) : HtmlService.createHtmlOutputFromFile('Index');
+  return out.setTitle('윤호, 채원이네')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
+    .addMetaTag('apple-mobile-web-app-capable', 'yes')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 // 홈 화면 앱(github.io)이 화면 없이 데이터만 주고받는 입구예요.
 function doPost(e) {
   var req = {};
-  try { req = JSON.parse((e &amp;&amp; e.postData &amp;&amp; e.postData.contents) || &#x27;{}&#x27;); } catch (x) { req = {}; }
+  try { req = JSON.parse((e &amp;&amp; e.postData &amp;&amp; e.postData.contents) || '{}'); } catch (x) { req = {}; }
   return ContentService.createTextOutput(JSON.stringify(api(req))).setMimeType(ContentService.MimeType.JSON);
 }
 // ycn-part-1.txt, ycn-part-2.txt … 를 번호 순서대로 이어 붙여 화면을 만들어요.
@@ -70,12 +71,12 @@ function appParts_() {
     while (it.hasNext()) {
       var f = it.next(); var m = /^ycn-part-(\d+)\.txt$/i.exec(f.getName());
       if (!m || f.isTrashed()) continue;
-      parts.push({ n: Number(m[1]), text: f.getBlob().getDataAsString(&#x27;UTF-8&#x27;) });
+      parts.push({ n: Number(m[1]), text: f.getBlob().getDataAsString('UTF-8') });
     }
   }
   parts.sort(function (a, b) { return a.n - b.n; });
-  for (var i = 0; i &lt; parts.length; i++) if (parts[i].n !== i + 1) return &#x27;&#x27;;
-  return parts.map(function (p) { return p.text; }).join(&#x27;&#x27;);
+  for (var i = 0; i &lt; parts.length; i++) if (parts[i].n !== i + 1) return '';
+  return parts.map(function (p) { return p.text; }).join('');
 }
 function appFile_() {
   var parents = DriveApp.getFileById(book_().getId()).getParents();
@@ -93,13 +94,13 @@ function appFile_() {
 
 /* ---------- sheet helpers ---------- */
 function book_() { return SpreadsheetApp.getActiveSpreadsheet(); }
-function tz_() { return book_().getSpreadsheetTimeZone() || &#x27;Asia/Seoul&#x27;; }
+function tz_() { return book_().getSpreadsheetTimeZone() || 'Asia/Seoul'; }
 function sheet_(key) {
   const name = SH[key];
   let sh = book_().getSheetByName(name);
   if (!sh) {
     sh = book_().insertSheet(name);
-    sh.getRange(1, 1, 1, COLS[key].length).setValues([COLS[key]]).setFontWeight(&#x27;bold&#x27;);
+    sh.getRange(1, 1, 1, COLS[key].length).setValues([COLS[key]]).setFontWeight('bold');
     sh.setFrozenRows(1);
   }
   return sh;
@@ -107,87 +108,87 @@ function sheet_(key) {
 function values_(key) {
   const sh = sheet_(key);
   const v = sh.getDataRange().getValues();
-  return v.slice(1).map(function (r, i) { return { r: r, row: i + 2 }; }).filter(function (x) { return String(x.r[0]) !== &#x27;&#x27;; });
+  return v.slice(1).map(function (r, i) { return { r: r, row: i + 2 }; }).filter(function (x) { return String(x.r[0]) !== ''; });
 }
 function dstr_(x, fmt) {
-  if (x instanceof Date) return Utilities.formatDate(x, tz_(), fmt || &#x27;yyyy-MM-dd&#x27;);
-  return String(x == null ? &#x27;&#x27; : x);
+  if (x instanceof Date) return Utilities.formatDate(x, tz_(), fmt || 'yyyy-MM-dd');
+  return String(x == null ? '' : x);
 }
-function bool_(x) { return x === true || String(x).toUpperCase() === &#x27;TRUE&#x27;; }
+function bool_(x) { return x === true || String(x).toUpperCase() === 'TRUE'; }
 function safe_(s, n) {
-  s = String(s == null ? &#x27;&#x27; : s).slice(0, n || 200);
-  return /^[=+\-@]/.test(s) ? &#x27; &#x27; + s : s;   // 수식 주입 방지
+  s = String(s == null ? '' : s).slice(0, n || 200);
+  return /^[=+\-@]/.test(s) ? ' ' + s : s;   // 수식 주입 방지
 }
-function today_() { return Utilities.formatDate(new Date(), tz_(), &#x27;yyyy-MM-dd&#x27;); }
-function fail_(code, msg) { return new Error(code + &#x27;|&#x27; + msg); }
+function today_() { return Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd'); }
+function fail_(code, msg) { return new Error(code + '|' + msg); }
 
 /* ---------- settings ---------- */
 function settings_() {
   const o = {};
-  values_(&#x27;SET&#x27;).forEach(function (x) { o[String(x.r[0])] = x.r[1]; });
-  if (!o.salt) { o.salt = Utilities.getUuid(); setSetting_(&#x27;salt&#x27;, o.salt); }
+  values_('SET').forEach(function (x) { o[String(x.r[0])] = x.r[1]; });
+  if (!o.salt) { o.salt = Utilities.getUuid(); setSetting_('salt', o.salt); }
   return o;
 }
 function setSetting_(k, val) {
-  const sh = sheet_(&#x27;SET&#x27;);
-  const rows = values_(&#x27;SET&#x27;);
+  const sh = sheet_('SET');
+  const rows = values_('SET');
   for (var i = 0; i &lt; rows.length; i++) {
     if (String(rows[i].r[0]) === k) { sh.getRange(rows[i].row, 2).setValue(val); return; }
   }
   sh.appendRow([k, val]);
 }
 function hash_(pin, salt) {
-  const b = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + &#x27;:&#x27; + pin, Utilities.Charset.UTF_8);
-  return b.map(function (x) { return ((x + 256) % 256).toString(16); }).map(function (h) { return h.length &lt; 2 ? &#x27;0&#x27; + h : h; }).join(&#x27;&#x27;);
+  const b = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + ':' + pin, Utilities.Charset.UTF_8);
+  return b.map(function (x) { return ((x + 256) % 256).toString(16); }).map(function (h) { return h.length &lt; 2 ? '0' + h : h; }).join('');
 }
 
 /* ---------- auth ---------- */
 function authorize_(a, st) {
-  if (!a || !a.who) throw fail_(&#x27;auth&#x27;, &#x27;로그인이 필요해요&#x27;);
+  if (!a || !a.who) throw fail_('auth', '로그인이 필요해요');
   const who = String(a.who);
-  if (who !== &#x27;parent&#x27; &amp;&amp; KIDS.indexOf(who) &lt; 0) throw fail_(&#x27;auth&#x27;, &#x27;사용자를 다시 골라주세요&#x27;);
-  const key = who === &#x27;parent&#x27; ? &#x27;parentPinHash&#x27; : &#x27;pin_&#x27; + who;
-  const h = String(st[key] || &#x27;&#x27;);
+  if (who !== 'parent' &amp;&amp; KIDS.indexOf(who) &lt; 0) throw fail_('auth', '사용자를 다시 골라주세요');
+  const key = who === 'parent' ? 'parentPinHash' : 'pin_' + who;
+  const h = String(st[key] || '');
   if (h) {
     const cache = CacheService.getScriptCache();
-    const ck = &#x27;fail_&#x27; + who;
+    const ck = 'fail_' + who;
     const n = Number(cache.get(ck) || 0);
-    if (n &gt;= 5) throw fail_(&#x27;locked&#x27;, &#x27;비밀번호를 여러 번 틀렸어요. 5분 뒤에 다시 해주세요&#x27;);
-    if (hash_(String(a.pin || &#x27;&#x27;), st.salt) !== h) {
+    if (n &gt;= 5) throw fail_('locked', '비밀번호를 여러 번 틀렸어요. 5분 뒤에 다시 해주세요');
+    if (hash_(String(a.pin || ''), st.salt) !== h) {
       cache.put(ck, String(n + 1), 300);
-      throw fail_(&#x27;auth&#x27;, &#x27;비밀번호가 맞지 않아요&#x27;);
+      throw fail_('auth', '비밀번호가 맞지 않아요');
     }
   }
   return {
-    role: who === &#x27;parent&#x27; ? &#x27;parent&#x27; : &#x27;kid&#x27;,
-    kid: who === &#x27;parent&#x27; ? null : who,
-    name: who === &#x27;parent&#x27; ? (String(a.name || &#x27;부모&#x27;).slice(0, 10)) : String(st[&#x27;name_&#x27; + who] || who)
+    role: who === 'parent' ? 'parent' : 'kid',
+    kid: who === 'parent' ? null : who,
+    name: who === 'parent' ? (String(a.name || '부모').slice(0, 10)) : String(st['name_' + who] || who)
   };
 }
-function parentOnly_(me) { if (me.role !== &#x27;parent&#x27;) throw fail_(&#x27;forbidden&#x27;, &#x27;부모님만 할 수 있어요&#x27;); }
+function parentOnly_(me) { if (me.role !== 'parent') throw fail_('forbidden', '부모님만 할 수 있어요'); }
 
 /* ---------- reads ---------- */
 function rules_() {
-  return values_(&#x27;RULE&#x27;).map(function (x) {
+  return values_('RULE').map(function (x) {
     const r = x.r;
     return { kid: String(r[0]), id: String(r[1]), label: String(r[2]), amount: Number(r[3]) || 0,
       ily: bool_(r[4]), kidOk: bool_(r[5]), max: Number(r[6]) || 0,
-      photo: (r[7] === &#x27;&#x27; || r[7] == null) ? true : bool_(r[7]), _row: x.row };
+      photo: (r[7] === '' || r[7] == null) ? true : bool_(r[7]), _row: x.row };
   });
 }
 function entries_() {
-  return values_(&#x27;LOG&#x27;).map(function (x) {
+  return values_('LOG').map(function (x) {
     const r = x.r;
     return { _id: String(r[0]), kid: String(r[1]), date: dstr_(r[2]), ts: Number(r[3]) || 0, ruleId: String(r[4]),
       label: String(r[5]), amount: Number(r[6]) || 0, memo: String(r[7]), photo: String(r[8]), photoHash: String(r[9]),
-      src: String(r[10]), status: String(r[11] || &#x27;ok&#x27;), reason: String(r[12]), byName: String(r[13]),
+      src: String(r[10]), status: String(r[11] || 'ok'), reason: String(r[12]), byName: String(r[13]),
       reviewer: String(r[14]), reviewedAt: Number(r[15]) || 0, _row: x.row };
   });
 }
 function ledger_() {
-  return values_(&#x27;PAY&#x27;).map(function (x) {
+  return values_('PAY').map(function (x) {
     const r = x.r;
-    return { kid: String(r[0]), month: dstr_(r[1], &#x27;yyyy-MM&#x27;), paid: bool_(r[2]), paidAt: dstr_(r[3]),
+    return { kid: String(r[0]), month: dstr_(r[1], 'yyyy-MM'), paid: bool_(r[2]), paidAt: dstr_(r[3]),
       base: Number(r[4]) || 0, plus: Number(r[5]) || 0, minus: Number(r[6]) || 0, bonus: Number(r[7]) || 0,
       total: Number(r[8]) || 0, by: String(r[9]), _row: x.row };
   });
@@ -198,11 +199,11 @@ function isPaid_(kid, month) {
 function publicCfg_(st) {
   const kids = {};
   KIDS.forEach(function (k) {
-    kids[k] = { name: String(st[&#x27;name_&#x27; + k] || k), photo: String(st[&#x27;photo_&#x27; + k] || &#x27;&#x27;), hasPin: !!st[&#x27;pin_&#x27; + k] };
+    kids[k] = { name: String(st['name_' + k] || k), photo: String(st['photo_' + k] || ''), hasPin: !!st['pin_' + k] };
   });
-  return { kids: kids, ily: String(st.photo_ily || &#x27;&#x27;), bg: String(st.photo_bg || &#x27;&#x27;), hasParentPin: !!st.parentPinHash };
+  return { kids: kids, ily: String(st.photo_ily || ''), bg: String(st.photo_bg || ''), hasParentPin: !!st.parentPinHash };
 }
-function clean_(o) { const c = {}; for (var k in o) if (k !== &#x27;_row&#x27;) c[k] = o[k]; return c; }
+function clean_(o) { const c = {}; for (var k in o) if (k !== '_row') c[k] = o[k]; return c; }
 
 /* ---------- api ---------- */
 function api(req) {
@@ -210,221 +211,237 @@ function api(req) {
     return { ok: true, data: route_(req || {}) };
   } catch (e) {
     const m = String(e &amp;&amp; e.message || e);
-    const i = m.indexOf(&#x27;|&#x27;);
-    return { ok: false, code: i &gt; 0 ? m.slice(0, i) : &#x27;error&#x27;, message: i &gt; 0 ? m.slice(i + 1) : &#x27;처리하지 못했어요: &#x27; + m };
+    const i = m.indexOf('|');
+    return { ok: false, code: i &gt; 0 ? m.slice(0, i) : 'error', message: i &gt; 0 ? m.slice(i + 1) : '처리하지 못했어요: ' + m };
   }
 }
 function route_(req) {
   const st = settings_();
-  const a = String(req.action || &#x27;&#x27;);
-  if (a === &#x27;boot&#x27;) return { cfg: publicCfg_(st), today: today_() };
-  if (a === &#x27;image&#x27;) return image_(req, st);
+  const a = String(req.action || '');
+  if (a === 'boot') return { cfg: publicCfg_(st), today: today_() };
+  if (a === 'image') return image_(req, st);
   const me = authorize_(req.auth, st);
-  if (a === &#x27;login&#x27;) return { role: me.role, name: me.name };
-  if (a === &#x27;load&#x27;) return load_(String(req.month || &#x27;&#x27;), me, st);
+  if (a === 'login' || a === 'load') logAccess_(req, me);
+  if (a === 'login') return { role: me.role, name: me.name };
+  if (a === 'load') return load_(String(req.month || ''), me, st);
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
     switch (a) {
-      case &#x27;addEntry&#x27;: return addEntry_(req, me, st);
-      case &#x27;review&#x27;: return review_(req, me);
-      case &#x27;deleteEntry&#x27;: return deleteEntry_(req, me);
-      case &#x27;pay&#x27;: return pay_(req, me);
-      case &#x27;unpay&#x27;: return unpay_(req, me);
-      case &#x27;saveRule&#x27;: return saveRule_(req, me);
-      case &#x27;deleteRule&#x27;: return deleteRule_(req, me);
-      case &#x27;saveSettings&#x27;: return saveSettings_(req, me);
-      case &#x27;setPin&#x27;: return setPin_(req, me, st);
-      case &#x27;setPhoto&#x27;: return setPhoto_(req, me, st);
+      case 'addEntry': return addEntry_(req, me, st);
+      case 'review': return review_(req, me);
+      case 'deleteEntry': return deleteEntry_(req, me);
+      case 'pay': return pay_(req, me);
+      case 'unpay': return unpay_(req, me);
+      case 'saveRule': return saveRule_(req, me);
+      case 'deleteRule': return deleteRule_(req, me);
+      case 'saveSettings': return saveSettings_(req, me);
+      case 'setPin': return setPin_(req, me, st);
+      case 'setPhoto': return setPhoto_(req, me, st);
     }
   } finally { lock.releaseLock(); }
-  throw fail_(&#x27;bad&#x27;, &#x27;알 수 없는 요청이에요&#x27;);
+  throw fail_('bad', '알 수 없는 요청이에요');
+}
+
+// 접속 기록: 앱이 보낸 meta가 있을 때만, 같은 사람·기기는 10분에 한 번만 남겨요. (위젯 자동 새로고침은 meta가 없어 빠져요)
+function logAccess_(req, me) {
+  try {
+    const m = req.meta; if (!m || typeof m !== 'object') return;
+    const who = String(req.auth.who), dev = safe_(m.dev, 60), via = safe_(m.via, 20);
+    const cache = CacheService.getScriptCache(), ck = 'acc_' + Utilities.base64EncodeWebSafe(who + '|' + me.name + '|' + dev).slice(0, 200);
+    if (req.action !== 'login' &amp;&amp; cache.get(ck)) return;
+    cache.put(ck, '1', 600);
+    const sh = sheet_('ACC');
+    sh.insertRowBefore(2);
+    sh.getRange(2, 1, 1, 5).setValues([[Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm:ss'), who === 'parent' ? '부모' : '아이', safe_(me.name, 20), via, dev]]);
+    if (sh.getLastRow() &gt; 3001) sh.deleteRows(3002, sh.getLastRow() - 3001);
+  } catch (e) {}
 }
 
 function load_(month, me, st) {
   if (!/^\d{4}-\d{2}$/.test(month)) month = today_().slice(0, 7);
   const kids = {};
   KIDS.forEach(function (k) {
-    kids[k] = { name: String(st[&#x27;name_&#x27; + k] || k), base: Number(st[&#x27;base_&#x27; + k]) || 0, baseVac: Number(st[&#x27;baseVac_&#x27; + k]) || 0, photo: String(st[&#x27;photo_&#x27; + k] || &#x27;&#x27;), hasPin: !!st[&#x27;pin_&#x27; + k], rules: [] };
+    kids[k] = { name: String(st['name_' + k] || k), base: Number(st['base_' + k]) || 0, baseVac: Number(st['baseVac_' + k]) || 0, photo: String(st['photo_' + k] || ''), hasPin: !!st['pin_' + k], rules: [] };
   });
   rules_().forEach(function (r) { if (kids[r.kid]) kids[r.kid].rules.push(clean_(r)); });
   var bonuses = [];
-  try { bonuses = JSON.parse(String(st.bonuses || &#x27;[]&#x27;)); } catch (e) { bonuses = []; }
+  try { bonuses = JSON.parse(String(st.bonuses || '[]')); } catch (e) { bonuses = []; }
   const ents = entries_().filter(function (e) {
     return e.date.slice(0, 7) === month &amp;&amp; (!me.kid || e.kid === me.kid);
   }).map(clean_).sort(function (a, b) { return b.ts - a.ts; });
   const led = {};
-  ledger_().forEach(function (l) { if (l.month === month &amp;&amp; (!me.kid || l.kid === me.kid)) led[l.kid + &#x27;_&#x27; + l.month] = clean_(l); });
+  ledger_().forEach(function (l) { if (l.month === month &amp;&amp; (!me.kid || l.kid === me.kid)) led[l.kid + '_' + l.month] = clean_(l); });
   return {
-    config: { kids: kids, bonuses: bonuses, vacMonths: String(st.vacMonths || &#x27;&#x27;),
-      accounts: me.role === &#x27;parent&#x27; ? accounts_(st) : {}, floorZero: st.floorZero === &#x27;&#x27; || st.floorZero == null ? true : bool_(st.floorZero),
-      ily: String(st.photo_ily || &#x27;&#x27;), bg: String(st.photo_bg || &#x27;&#x27;), hasParentPin: !!st.parentPinHash },
+    config: { kids: kids, bonuses: bonuses, vacMonths: String(st.vacMonths || ''),
+      accounts: me.role === 'parent' ? accounts_(st) : {}, floorZero: st.floorZero === '' || st.floorZero == null ? true : bool_(st.floorZero),
+      ily: String(st.photo_ily || ''), bg: String(st.photo_bg || ''), hasParentPin: !!st.parentPinHash },
     entries: ents, ledger: led, today: today_(), month: month, me: me
   };
 }
 
 function accounts_(st) {
   const o = {};
-  KIDS.forEach(function (k) { o[k] = { bank: String(st[&#x27;bank_&#x27; + k] || &#x27;&#x27;), no: String(st[&#x27;acct_&#x27; + k] || &#x27;&#x27;) }; });
+  KIDS.forEach(function (k) { o[k] = { bank: String(st['bank_' + k] || ''), no: String(st['acct_' + k] || '') }; });
   return o;
 }
 function image_(req, st) {
-  const id = String(req.id || &#x27;&#x27;);
-  if (!id) throw fail_(&#x27;bad&#x27;, &#x27;사진 정보가 없어요&#x27;);
-  const isPublic = PHOTO_KEYS.some(function (k) { return String(st[k] || &#x27;&#x27;) === id; });
+  const id = String(req.id || '');
+  if (!id) throw fail_('bad', '사진 정보가 없어요');
+  const isPublic = PHOTO_KEYS.some(function (k) { return String(st[k] || '') === id; });
   if (!isPublic) {
     const me = authorize_(req.auth, st);
     const e = entries_().filter(function (x) { return x.photo === id; })[0];
-    if (!e || (me.kid &amp;&amp; e.kid !== me.kid)) throw fail_(&#x27;forbidden&#x27;, &#x27;볼 수 없는 사진이에요&#x27;);
+    if (!e || (me.kid &amp;&amp; e.kid !== me.kid)) throw fail_('forbidden', '볼 수 없는 사진이에요');
   }
   const blob = DriveApp.getFileById(id).getBlob();
-  return { id: id, url: &#x27;data:&#x27; + blob.getContentType() + &#x27;;base64,&#x27; + Utilities.base64Encode(blob.getBytes()) };
+  return { id: id, url: 'data:' + blob.getContentType() + ';base64,' + Utilities.base64Encode(blob.getBytes()) };
 }
 
 function folder_(st) {
-  var id = String(st.photoFolderId || &#x27;&#x27;);
+  var id = String(st.photoFolderId || '');
   if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
-  const f = DriveApp.createFolder(&#x27;윤호, 채원이네 인증 사진&#x27;);
-  setSetting_(&#x27;photoFolderId&#x27;, f.getId());
+  const f = DriveApp.createFolder('윤호, 채원이네 인증 사진');
+  setSetting_('photoFolderId', f.getId());
   return f;
 }
 function savePhoto_(dataUrl, name, st) {
-  const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(String(dataUrl || &#x27;&#x27;));
-  if (!m) throw fail_(&#x27;bad&#x27;, &#x27;사진 형식이 올바르지 않아요&#x27;);
+  const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(String(dataUrl || ''));
+  if (!m) throw fail_('bad', '사진 형식이 올바르지 않아요');
   const bytes = Utilities.base64Decode(m[2]);
-  if (bytes.length &gt; 4 * 1024 * 1024) throw fail_(&#x27;bad&#x27;, &#x27;사진이 너무 커요&#x27;);
+  if (bytes.length &gt; 4 * 1024 * 1024) throw fail_('bad', '사진이 너무 커요');
   return folder_(st).createFile(Utilities.newBlob(bytes, m[1], name)).getId();
 }
 function trash_(id) { if (!id) return; try { DriveApp.getFileById(id).setTrashed(true); } catch (e) {} }
 
 function addEntry_(req, me, st) {
-  const kid = me.kid || String(req.kid || &#x27;&#x27;);
-  if (KIDS.indexOf(kid) &lt; 0) throw fail_(&#x27;bad&#x27;, &#x27;아이를 골라주세요&#x27;);
+  const kid = me.kid || String(req.kid || '');
+  if (KIDS.indexOf(kid) &lt; 0) throw fail_('bad', '아이를 골라주세요');
   const rule = rules_().filter(function (r) { return r.kid === kid &amp;&amp; r.id === String(req.ruleId); })[0];
-  if (!rule) throw fail_(&#x27;bad&#x27;, &#x27;없는 항목이에요. 화면을 새로고침해 주세요&#x27;);
-  const asKid = me.role === &#x27;kid&#x27; || req.asKid === true;
+  if (!rule) throw fail_('bad', '없는 항목이에요. 화면을 새로고침해 주세요');
+  const asKid = me.role === 'kid' || req.asKid === true;
   const date = asKid ? today_() : String(req.date || today_());
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date &gt; today_()) throw fail_(&#x27;bad&#x27;, &#x27;날짜가 올바르지 않아요&#x27;);
-  if (isPaid_(kid, date.slice(0, 7))) throw fail_(&#x27;paid&#x27;, &#x27;이미 정산이 끝난 달이에요&#x27;);
-  const hashv = String(req.photoHash || &#x27;&#x27;).slice(0, 64);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date &gt; today_()) throw fail_('bad', '날짜가 올바르지 않아요');
+  if (isPaid_(kid, date.slice(0, 7))) throw fail_('paid', '이미 정산이 끝난 달이에요');
+  const hashv = String(req.photoHash || '').slice(0, 64);
   if (asKid) {
-    if (!(rule.kidOk &amp;&amp; rule.amount &gt; 0)) throw fail_(&#x27;bad&#x27;, &#x27;아이가 인증할 수 없는 항목이에요&#x27;);
-    if (rule.photo &amp;&amp; !req.photo) throw fail_(&#x27;bad&#x27;, &#x27;인증 사진이 필요해요&#x27;);
+    if (!(rule.kidOk &amp;&amp; rule.amount &gt; 0)) throw fail_('bad', '아이가 인증할 수 없는 항목이에요');
+    if (rule.photo &amp;&amp; !req.photo) throw fail_('bad', '인증 사진이 필요해요');
     const ents = entries_();
-    const used = ents.filter(function (e) { return e.kid === kid &amp;&amp; e.ruleId === rule.id &amp;&amp; e.date === date &amp;&amp; e.status !== &#x27;rejected&#x27;; }).length;
-    if (rule.max &amp;&amp; used &gt;= rule.max) throw fail_(&#x27;limit&#x27;, &#x27;오늘은 이 항목을 더 인증할 수 없어요&#x27;);
-    if (hashv &amp;&amp; ents.some(function (e) { return e.kid === kid &amp;&amp; e.photoHash === hashv; })) throw fail_(&#x27;dup&#x27;, &#x27;이미 인증에 쓴 사진이에요&#x27;);
+    const used = ents.filter(function (e) { return e.kid === kid &amp;&amp; e.ruleId === rule.id &amp;&amp; e.date === date &amp;&amp; e.status !== 'rejected'; }).length;
+    if (rule.max &amp;&amp; used &gt;= rule.max) throw fail_('limit', '오늘은 이 항목을 더 인증할 수 없어요');
+    if (hashv &amp;&amp; ents.some(function (e) { return e.kid === kid &amp;&amp; e.photoHash === hashv; })) throw fail_('dup', '이미 인증에 쓴 사진이에요');
   }
-  const photoId = req.photo ? savePhoto_(req.photo, date + &#x27;_&#x27; + kid + &#x27;_&#x27; + rule.id + &#x27;.jpg&#x27;, st) : &#x27;&#x27;;
-  const id = Utilities.getUuid().replace(/-/g, &#x27;&#x27;).slice(0, 10);
-  sheet_(&#x27;LOG&#x27;).appendRow([id, kid, date, Date.now(), rule.id, safe_(rule.label, 60), rule.amount, safe_(req.memo, 200), photoId, hashv,
-    asKid ? &#x27;kid&#x27; : &#x27;parent&#x27;, asKid ? &#x27;pending&#x27; : &#x27;ok&#x27;, &#x27;&#x27;, safe_(me.name, 20), &#x27;&#x27;, &#x27;&#x27;]);
-  return { id: id, status: asKid ? &#x27;pending&#x27; : &#x27;ok&#x27; };
+  const photoId = req.photo ? savePhoto_(req.photo, date + '_' + kid + '_' + rule.id + '.jpg', st) : '';
+  const id = Utilities.getUuid().replace(/-/g, '').slice(0, 10);
+  sheet_('LOG').appendRow([id, kid, date, Date.now(), rule.id, safe_(rule.label, 60), rule.amount, safe_(req.memo, 200), photoId, hashv,
+    asKid ? 'kid' : 'parent', asKid ? 'pending' : 'ok', '', safe_(me.name, 20), '', '']);
+  return { id: id, status: asKid ? 'pending' : 'ok' };
 }
 
 function findEntry_(id) {
   const e = entries_().filter(function (x) { return x._id === String(id); })[0];
-  if (!e) throw fail_(&#x27;gone&#x27;, &#x27;이미 지워졌거나 없는 기록이에요&#x27;);
+  if (!e) throw fail_('gone', '이미 지워졌거나 없는 기록이에요');
   return e;
 }
 function review_(req, me) {
   parentOnly_(me);
   const e = findEntry_(req.id);
-  if (isPaid_(e.kid, e.date.slice(0, 7))) throw fail_(&#x27;paid&#x27;, &#x27;이미 정산이 끝난 달이에요&#x27;);
-  const ok = req.decision === &#x27;ok&#x27;;
-  sheet_(&#x27;LOG&#x27;).getRange(e._row, 12, 1, 5).setValues([[ok ? &#x27;ok&#x27; : &#x27;rejected&#x27;, ok ? &#x27;&#x27; : safe_(req.reason, 100), e.byName, safe_(me.name, 20), Date.now()]]);
-  return { id: e._id, status: ok ? &#x27;ok&#x27; : &#x27;rejected&#x27; };
+  if (isPaid_(e.kid, e.date.slice(0, 7))) throw fail_('paid', '이미 정산이 끝난 달이에요');
+  const ok = req.decision === 'ok';
+  sheet_('LOG').getRange(e._row, 12, 1, 5).setValues([[ok ? 'ok' : 'rejected', ok ? '' : safe_(req.reason, 100), e.byName, safe_(me.name, 20), Date.now()]]);
+  return { id: e._id, status: ok ? 'ok' : 'rejected' };
 }
 function deleteEntry_(req, me) {
   const e = findEntry_(req.id);
-  if (me.role !== &#x27;parent&#x27; &amp;&amp; !(e.kid === me.kid &amp;&amp; e.status === &#x27;pending&#x27;)) throw fail_(&#x27;forbidden&#x27;, &#x27;지울 수 없는 기록이에요&#x27;);
-  if (isPaid_(e.kid, e.date.slice(0, 7))) throw fail_(&#x27;paid&#x27;, &#x27;이미 정산이 끝난 달이에요&#x27;);
-  sheet_(&#x27;LOG&#x27;).deleteRow(e._row);
+  if (me.role !== 'parent' &amp;&amp; !(e.kid === me.kid &amp;&amp; e.status === 'pending')) throw fail_('forbidden', '지울 수 없는 기록이에요');
+  if (isPaid_(e.kid, e.date.slice(0, 7))) throw fail_('paid', '이미 정산이 끝난 달이에요');
+  sheet_('LOG').deleteRow(e._row);
   trash_(e.photo);
   return { id: e._id };
 }
 function pay_(req, me) {
   parentOnly_(me);
   const kid = String(req.kid), month = String(req.month);
-  if (KIDS.indexOf(kid) &lt; 0 || !/^\d{4}-\d{2}$/.test(month)) throw fail_(&#x27;bad&#x27;, &#x27;정산 정보가 올바르지 않아요&#x27;);
+  if (KIDS.indexOf(kid) &lt; 0 || !/^\d{4}-\d{2}$/.test(month)) throw fail_('bad', '정산 정보가 올바르지 않아요');
   const s = req.summary || {};
   const row = [kid, month, true, today_(), Number(s.base) || 0, Number(s.plus) || 0, Number(s.minus) || 0, Number(s.bonus) || 0, Number(s.total) || 0, safe_(me.name, 20)];
   const l = ledger_().filter(function (x) { return x.kid === kid &amp;&amp; x.month === month; })[0];
-  if (l) sheet_(&#x27;PAY&#x27;).getRange(l._row, 1, 1, row.length).setValues([row]); else sheet_(&#x27;PAY&#x27;).appendRow(row);
+  if (l) sheet_('PAY').getRange(l._row, 1, 1, row.length).setValues([row]); else sheet_('PAY').appendRow(row);
   return { paid: true };
 }
 function unpay_(req, me) {
   parentOnly_(me);
   const l = ledger_().filter(function (x) { return x.kid === String(req.kid) &amp;&amp; x.month === String(req.month); })[0];
-  if (l) sheet_(&#x27;PAY&#x27;).getRange(l._row, 3).setValue(false);
+  if (l) sheet_('PAY').getRange(l._row, 3).setValue(false);
   return { paid: false };
 }
 function saveRule_(req, me) {
   parentOnly_(me);
   const kid = String(req.kid); const r = req.rule || {};
-  if (KIDS.indexOf(kid) &lt; 0) throw fail_(&#x27;bad&#x27;, &#x27;아이를 골라주세요&#x27;);
+  if (KIDS.indexOf(kid) &lt; 0) throw fail_('bad', '아이를 골라주세요');
   const amount = Math.round(Number(r.amount) || 0);
-  const label = String(r.label || &#x27;&#x27;).trim();
-  if (!label || !amount) throw fail_(&#x27;bad&#x27;, &#x27;이름과 금액을 입력해 주세요&#x27;);
-  const id = String(r.id || (&#x27;r&#x27; + Date.now().toString(36)));
+  const label = String(r.label || '').trim();
+  if (!label || !amount) throw fail_('bad', '이름과 금액을 입력해 주세요');
+  const id = String(r.id || ('r' + Date.now().toString(36)));
   const row = [kid, id, safe_(label, 40), amount, !!r.ily, amount &gt; 0 &amp;&amp; !!r.kidOk, Math.max(0, Math.round(Number(r.max) || 0)), r.photo !== false];
   const ex = rules_().filter(function (x) { return x.kid === kid &amp;&amp; x.id === id; })[0];
-  if (ex) sheet_(&#x27;RULE&#x27;).getRange(ex._row, 1, 1, row.length).setValues([row]); else sheet_(&#x27;RULE&#x27;).appendRow(row);
+  if (ex) sheet_('RULE').getRange(ex._row, 1, 1, row.length).setValues([row]); else sheet_('RULE').appendRow(row);
   return { id: id };
 }
 function deleteRule_(req, me) {
   parentOnly_(me);
   const ex = rules_().filter(function (x) { return x.kid === String(req.kid) &amp;&amp; x.id === String(req.id); })[0];
-  if (ex) sheet_(&#x27;RULE&#x27;).deleteRow(ex._row);
+  if (ex) sheet_('RULE').deleteRow(ex._row);
   return {};
 }
 function saveSettings_(req, me) {
   parentOnly_(me);
   const s = req.settings || {};
   KIDS.forEach(function (k) {
-    if (s[&#x27;base_&#x27; + k] != null) setSetting_(&#x27;base_&#x27; + k, Math.max(0, Math.round(Number(s[&#x27;base_&#x27; + k]) || 0)));
-    if (s[&#x27;baseVac_&#x27; + k] != null) setSetting_(&#x27;baseVac_&#x27; + k, Math.max(0, Math.round(Number(s[&#x27;baseVac_&#x27; + k]) || 0)));
+    if (s['base_' + k] != null) setSetting_('base_' + k, Math.max(0, Math.round(Number(s['base_' + k]) || 0)));
+    if (s['baseVac_' + k] != null) setSetting_('baseVac_' + k, Math.max(0, Math.round(Number(s['baseVac_' + k]) || 0)));
   });
   KIDS.forEach(function (k) {
-    if (s[&#x27;bank_&#x27; + k] != null) setSetting_(&#x27;bank_&#x27; + k, String(s[&#x27;bank_&#x27; + k]).slice(0, 20));
-    if (s[&#x27;acct_&#x27; + k] != null) setSetting_(&#x27;acct_&#x27; + k, String(s[&#x27;acct_&#x27; + k]).replace(/[^0-9-]/g, &#x27;&#x27;).slice(0, 30));
+    if (s['bank_' + k] != null) setSetting_('bank_' + k, String(s['bank_' + k]).slice(0, 20));
+    if (s['acct_' + k] != null) setSetting_('acct_' + k, String(s['acct_' + k]).replace(/[^0-9-]/g, '').slice(0, 30));
   });
-  if (s.vacMonths != null) setSetting_(&#x27;vacMonths&#x27;, String(s.vacMonths).replace(/[^0-9,]/g, &#x27;&#x27;).slice(0, 40));
-  if (s.floorZero != null) setSetting_(&#x27;floorZero&#x27;, !!s.floorZero);
-  if (s.bonuses != null) setSetting_(&#x27;bonuses&#x27;, JSON.stringify(s.bonuses).slice(0, 5000));
+  if (s.vacMonths != null) setSetting_('vacMonths', String(s.vacMonths).replace(/[^0-9,]/g, '').slice(0, 40));
+  if (s.floorZero != null) setSetting_('floorZero', !!s.floorZero);
+  if (s.bonuses != null) setSetting_('bonuses', JSON.stringify(s.bonuses).slice(0, 5000));
   return {};
 }
 function setPin_(req, me, st) {
   const target = String(req.target);
   // 부모 PIN이 아직 없을 때만 누구나 첫 설정 가능, 그 뒤로는 부모만
-  if (!(target === &#x27;parent&#x27; &amp;&amp; !st.parentPinHash)) parentOnly_(me);
-  const pin = String(req.pin || &#x27;&#x27;);
-  if (target === &#x27;parent&#x27;) {
-    if (!/^\d{4,8}$/.test(pin)) throw fail_(&#x27;bad&#x27;, &#x27;숫자 4~8자리로 정해주세요&#x27;);
-    setSetting_(&#x27;parentPinHash&#x27;, hash_(pin, st.salt));
+  if (!(target === 'parent' &amp;&amp; !st.parentPinHash)) parentOnly_(me);
+  const pin = String(req.pin || '');
+  if (target === 'parent') {
+    if (!/^\d{4,8}$/.test(pin)) throw fail_('bad', '숫자 4~8자리로 정해주세요');
+    setSetting_('parentPinHash', hash_(pin, st.salt));
   } else if (KIDS.indexOf(target) &gt;= 0) {
-    if (pin &amp;&amp; !/^\d{4,8}$/.test(pin)) throw fail_(&#x27;bad&#x27;, &#x27;숫자 4~8자리로 정해주세요&#x27;);
-    setSetting_(&#x27;pin_&#x27; + target, pin ? hash_(pin, st.salt) : &#x27;&#x27;);
-  } else throw fail_(&#x27;bad&#x27;, &#x27;대상이 올바르지 않아요&#x27;);
+    if (pin &amp;&amp; !/^\d{4,8}$/.test(pin)) throw fail_('bad', '숫자 4~8자리로 정해주세요');
+    setSetting_('pin_' + target, pin ? hash_(pin, st.salt) : '');
+  } else throw fail_('bad', '대상이 올바르지 않아요');
   return {};
 }
 function setPhoto_(req, me, st) {
   parentOnly_(me);
   const target = String(req.target);
-  if ([&#x27;yunho&#x27;, &#x27;chaewon&#x27;, &#x27;ily&#x27;, &#x27;bg&#x27;].indexOf(target) &lt; 0) throw fail_(&#x27;bad&#x27;, &#x27;대상이 올바르지 않아요&#x27;);
-  const old = String(st[&#x27;photo_&#x27; + target] || &#x27;&#x27;);
-  const id = savePhoto_(req.data, &#x27;profile_&#x27; + target + &#x27;.jpg&#x27;, st);
-  setSetting_(&#x27;photo_&#x27; + target, id);
+  if (['yunho', 'chaewon', 'ily', 'bg'].indexOf(target) &lt; 0) throw fail_('bad', '대상이 올바르지 않아요');
+  const old = String(st['photo_' + target] || '');
+  const id = savePhoto_(req.data, 'profile_' + target + '.jpg', st);
+  setSetting_('photo_' + target, id);
   trash_(old);
   return { id: id };
 }
 
 /** 처음 한 번 편집기에서 실행해 권한(시트·드라이브)을 허용하세요. */
 function setup() {
-  [&#x27;SET&#x27;, &#x27;RULE&#x27;, &#x27;LOG&#x27;, &#x27;PAY&#x27;].forEach(sheet_);
+  ['SET', 'RULE', 'LOG', 'PAY'].forEach(sheet_);
   const st = settings_();
   folder_(st);
-  Logger.log(&#x27;준비 완료. 이제 배포 &gt; 새 배포 &gt; 웹 앱으로 배포하세요.&#x27;);
+  Logger.log('준비 완료. 이제 배포 &gt; 새 배포 &gt; 웹 앱으로 배포하세요.');
 }
 </pre></div>
 <div class="card"><h2>2. 붙여넣고 새 버전 배포</h2><ol>
