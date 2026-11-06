@@ -10,9 +10,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f3f5f8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#10141b" media="(prefers-color-scheme: dark)">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=4">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-v5.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=4">
-<link rel="manifest" href="manifest.webmanifest?v=4">
+<link rel="manifest" href="manifest.webmanifest?v=5">
 <style>
 /* 홈 화면 앱: 본문만 안쪽에서 스크롤하고 탭바는 화면 맨 아래에 붙여 둬요. (아이폰에서 탭바가 스크롤 따라 움직이지 않게) */
 html{background:var(--solid)!important;height:100%;overflow:hidden}
@@ -262,7 +262,7 @@ padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:c
 <nav class="tabs" aria-label="메뉴" hidden><div class="in" role="tablist" id="tabs"></div></nav>
 <div id="layer"></div>
 <script>
-window.addEventListener("error",function(e){var el=document.getElementById("loginArea");if(el){el.hidden=false;el.innerHTML='<div class="card empty">앱 오류: '+String(e.message||"알 수 없음").replace(/</g,"&lt;")+' (줄 '+(e.lineno||"?")+')<br>이 화면을 캡처해서 보내주세요.</div>';}});
+window.addEventListener("error",function(e){if(!e.lineno)return;var el=document.getElementById("loginArea");if(el){el.hidden=false;el.innerHTML='<div class="card empty">앱 오류: '+String(e.message||"알 수 없음").replace(/</g,"&lt;")+' (줄 '+(e.lineno||"?")+')<br>이 화면을 캡처해서 보내주세요.</div>';}});
 </script>
 <script>
 (() => {
