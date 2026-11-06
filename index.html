@@ -488,7 +488,7 @@ if(kidView){ const u=todayUsed(r.id); const mx=Number(r.max)||0;
 if(mx){ lim=`<span class="lim num">오늘 ${u}/${mx}회</span>`; if(u>=mx) off=true; } }
 return `<button class="rule ${r.amount>0?"p":"m"} ${r.ily&&r.amount>0?"d":""}" data-rule="${esc(r.id)}" ${off?"disabled":""}>
 ${cnt[r.id]?`<span class="cnt num">${cnt[r.id]}</span>`:""}
-<span class="ic">${ruleIcon(r)}</span><span class="t">${esc(r.label)}</span><span class="a num">${won(r.amount)}${kidView&&r.photo!==false?" 📷":""}</span>${lim}</button>`;}).join("")+`</div>`;
+<span class="ic">${ruleIcon(r)}</span><span class="t">${esc(r.label).replace(/\s*(\([^)]*\))/g,"<span style=\"white-space:nowrap\"> $1</span>")}</span><span class="a num">${won(r.amount)}${kidView&&r.photo!==false?" 📷":""}</span>${lim}</button>`;}).join("")+`</div>`;
 }
 
 /* ---------- render ---------- */
