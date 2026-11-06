@@ -376,6 +376,9 @@ const ilyHead = () => { const u=photoFor("ily"); return `<div class="ilyh">${u?`
 const isKid = () => S.mode==="kid";
 const curKid = () => isKid() ? S.self : S.kid;
 const kidCfg = (k=curKid()) => S.config?.kids?.[k] || null;
+const vacMonths = () => String(S.config?.vacMonths||"").split(/[^0-9]+/).filter(Boolean).map(Number);
+function isVac(k=curKid(), month=S.month){ return (Number(kidCfg(k)?.baseVac)||0)>0 && vacMonths().includes(Number(month.slice(5,7))); }
+function kidBase(k=curKid(), month=S.month){ const c=kidCfg(k)||{}; return isVac(k,month) ? Number(c.baseVac)||0 : Number(c.base)||0; }
 const ledgerKey = (kid,month) => kid+"_"+month;
 const isPaid = (k=curKid()) => !!S.ledger[ledgerKey(k,S.month)]?.paid;
 const status = e => e.status || "ok";
@@ -395,6 +398,12 @@ if(!es.length) continue; const ok=!es.some(e=>e.amount<0);
 out.push({label:b.label,total:ok?amt:0,note:ok?(live?"지금까지 벌점 없음 · 말일까지 유지하면 지급":"달성"):"벌점이 있어 미달성"});
 }else if(b.type==="weekly"){
 const wk={}; for(const e of es) if(e.ruleId===b.ruleId) wk[weekKey(e.date)]=(wk[weekKey(e.date)]||0)+1;
+if(b.per){ // 주 N회 이상이면 그 주 횟수 × per원 (최대 cap회), 주마다 따로 계산
+const per=Number(b.per)||0, cap=Number(b.cap)||99, min=Number(b.min)||1; let tot=0, wkN=0;
+for(const n of Object.values(wk)) if(n>=min){ tot+=Math.min(n,cap)*per; wkN++; }
+const cur=wk[weekKey(TODAY)]||0;
+out.push({label:b.label,total:tot,note:`주 ${min}회 이상이면 그 주 횟수 × ${Number(per).toLocaleString("ko-KR")}원 (최대 ${cap}회) · 달성 ${wkN}주`+(live?` · 이번 주 ${cur}회`+(cur>=min?` → ${(Math.min(cur,cap)*per).toLocaleString("ko-KR")}원`:` (${min-cur}회 더 하면 ${(min*per).toLocaleString("ko-KR")}원)`):"")});
+continue; }
 const weeks=Object.values(wk).filter(n=>n>=(Number(b.min)||1)).length; const cur=wk[weekKey(TODAY)]||0;
 out.push({label:b.label,total:weeks*amt,note:`달성 ${weeks}주 × ${won(amt)}`+(live?` · 이번 주 ${cur}/${b.min}회`:"")});
 }else if(b.type==="weeklyMiss"){
@@ -415,7 +424,7 @@ let p=0,m=0,w=0,wn=0;
 for(const e of entries(k)||[]){ const s=status(e);
 if(s==="ok"){ if(e.amount>0)p+=e.amount; else m+=e.amount; }
 else if(s==="pending"){ w+=e.amount; wn++; } }
-const base = Number(kidCfg(k)?.base)||0;
+const base = kidBase(k);
 const bl=bonusList(k); const bo=bl.reduce((a,b)=>a+b.total,0); const bop=bl.filter(b=>b.total>0).reduce((a,b)=>a+b.total,0); const bon=bo-bop;
 let pay = base+p+m+bo; const raw = pay;
 if(S.config?.floorZero!==false && pay<0) pay=0;
@@ -474,7 +483,7 @@ if(kidView){ const u=todayUsed(r.id); const mx=Number(r.max)||0;
 if(mx){ lim=`<span class="lim num">오늘 ${u}/${mx}회</span>`; if(u>=mx) off=true; } }
 return `<button class="rule ${r.amount>0?"p":"m"} ${r.ily&&r.amount>0?"d":""}" data-rule="${esc(r.id)}" ${off?"disabled":""}>
 ${cnt[r.id]?`<span class="cnt num">${cnt[r.id]}</span>`:""}
-<span class="ic">${ruleIcon(r)}</span><span class="t">${esc(r.label)}</span><span class="a num">${won(r.amount)}</span>${lim}</button>`;}).join("")+`</div>`;
+<span class="ic">${ruleIcon(r)}</span><span class="t">${esc(r.label)}</span><span class="a num">${won(r.amount)}${kidView&&r.photo!==false?" 📷":""}</span>${lim}</button>`;}).join("")+`</div>`;
 }
 
 /* ---------- render ---------- */
@@ -578,7 +587,7 @@ function renderKidCheck(){
 const k=S.self; const rules=(kidCfg(k)?.rules||[]).filter(r=>r.kidOk && r.amount>0);
 const pend=(S.ent[k]||[]).filter(e=>status(e)==="pending");
 const dis = isPaid(k) || S.month!==THIS_MONTH;
-let h=`<div class="stack"><div class="banner">한 일을 고르고 <b>그 자리에서 사진을 찍어</b> 인증해요. 부모님이 확인하면 용돈에 더해져요.${S.month!==THIS_MONTH?" 인증은 이번 달에만 할 수 있어요.":""}</div>`;
+let h=`<div class="stack"><div class="banner">한 일을 골라 인증해요. <b>📷 표시</b>가 있는 항목은 그 자리에서 사진을 찍어야 해요. 부모님이 확인하면 용돈에 더해져요.${S.month!==THIS_MONTH?" 인증은 이번 달에만 할 수 있어요.":""}</div>`;
 if(pend.length) h+=`<section class="group"><h2 class="waitc">부모님 확인 기다리는 중</h2><div class="card wait">${pend.map(e=>entryRow(e,{showDate:true})).join("")}</div></section>`;
 if(!rules.length) h+=`<div class="card empty">인증할 수 있는 항목이 없어요.</div>`;
 else{
@@ -609,7 +618,7 @@ const agg = {};
 for(const e of es){ if(status(e)!=="ok") continue; const a = agg[e.label+"|"+e.amount] ||= {label:e.label,amount:e.amount,n:0}; a.n++; }
 const rows = Object.values(agg).sort((a,b)=>b.amount-a.amount);
 const t = totals(k); const led = S.ledger[ledgerKey(k,S.month)];
-let h = `<div class="stack" style="gap:12px"><div class="card"><div class="srow"><span>기본 용돈</span><span class="num">${krw(t.base)}</span></div>`;
+let h = `<div class="stack" style="gap:12px"><div class="card"><div class="srow"><span>기본 용돈${isVac(k)?" (방학)":""}</span><span class="num">${krw(t.base)}</span></div>`;
 for(const r of rows) h += `<div class="srow"><span>${esc(r.label)} <span class="x num">× ${r.n}</span></span><span class="num ${r.amount>0?"plus":"minus"}">${won(r.amount*r.n)}</span></div>`;
 if(!rows.length) h += `<div class="srow"><span class="x">이달 반영된 상벌 기록 없음</span><span></span></div>`;
 for(const b of t.bl) h += `<div class="srow"><span><span class="pill ${b.total>0?"ok":b.total<0?"no":""}">${b.pen?"벌칙":"보너스"}</span> ${esc(b.label)}<br><span class="x">${esc(b.note)}</span></span><span class="num ${b.total>0?"plus":b.total<0?"minus":"x"}">${b.total?won(b.total):"0"}</span></div>`;
@@ -644,7 +653,10 @@ let h = `<div class="stack">
 <div class="inline"><label class="ib" for="ilyFile">일리 사진 바꾸기</label><input id="ilyFile" data-target="ily" type="file" accept="image/*" hidden></div>
 </section>
 <section class="group"><h2>${esc(kc.name)} 기본 용돈</h2>
-<div class="inline"><input class="inp num" id="baseInp" type="number" inputmode="numeric" step="1000" value="${Number(kc.base)||0}"><button class="ib solid" data-savebase="1">저장</button></div>
+<div class="inline"><span class="note" style="min-width:56px">평소·학기</span><input class="inp num" id="baseInp" type="number" inputmode="numeric" step="1000" value="${Number(kc.base)||0}" style="flex:1"></div>
+<div class="inline"><span class="note" style="min-width:56px">방학</span><input class="inp num" id="baseVacInp" type="number" inputmode="numeric" step="1000" value="${Number(kc.baseVac)||""}" placeholder="비우면 평소와 같음" style="flex:1"></div>
+<div class="inline"><span class="note" style="min-width:56px">방학 달</span><input class="inp" id="vacInp" inputmode="numeric" value="${esc(S.config?.vacMonths||"1,2,7,8")}" placeholder="예: 1,2,7,8" style="flex:1"><button class="ib solid" data-savebase="1">저장</button></div>
+<p class="note">방학 달에는 방학 용돈이 기본 용돈이 돼요. 방학 달은 두 아이 공통이에요.</p>
 <label class="chk"><input type="checkbox" id="floorChk" ${S.config?.floorZero!==false?"checked":""}> 벌점이 많아도 지급액은 0원 아래로 내려가지 않게 (두 아이 공통)</label>
 </section>
 <section class="group"><h2>${esc(kc.name)} 상벌 항목</h2><div class="card">`;
@@ -652,21 +664,22 @@ for(const r of rules){
 if(S.editRule===r.id){
 h += `<div class="edrow"><input class="inp" id="eLabel" value="${esc(r.label)}" aria-label="항목 이름"><input class="inp num" id="eAmt" type="number" inputmode="numeric" step="500" value="${r.amount}" aria-label="금액(벌점은 음수)">
 <div class="acts"><label class="chk"><input type="checkbox" id="eIly" ${r.ily?"checked":""}> 일리 돌봄</label>
-<label class="chk"><input type="checkbox" id="eKid" ${r.kidOk?"checked":""}> 아이가 사진 인증</label>
+<label class="chk"><input type="checkbox" id="eKid" ${r.kidOk?"checked":""}> 아이가 인증</label>
+<label class="chk"><input type="checkbox" id="ePhoto" ${r.photo!==false?"checked":""}> 사진 필수</label>
 <label class="chk">하루 <input class="inp num mini" id="eMax" type="number" inputmode="numeric" min="0" value="${Number(r.max)||0}">회</label></div>
 <div class="acts"><span style="flex:1"></span><button class="ib danger" data-rdel="${esc(r.id)}">삭제</button><button class="ib" data-rcancel="1">취소</button><button class="ib solid" data-rsave="${esc(r.id)}">저장</button></div></div>`;
 }else{
-const tags=[r.ily?"일리 돌봄":"", r.kidOk?`아이 인증${Number(r.max)?` · 하루 ${r.max}회`:""}`:""].filter(Boolean).join(" · ");
+const tags=[r.ily?"일리 돌봄":"", r.kidOk?`아이 인증${r.photo===false?"(사진 없이)":"(사진)"}${Number(r.max)?` · 하루 ${r.max}회`:""}`:""].filter(Boolean).join(" · ");
 h += `<div class="row"><div class="main"><b>${esc(r.label)}</b>${tags?`<div class="sub">${esc(tags)}</div>`:""}</div><span class="amt num ${r.amount>0?"plus":"minus"}">${won(r.amount)}</span><button class="ib" data-redit="${esc(r.id)}">수정</button></div>`;
 }
 }
 if(!rules.length) h += `<div class="empty">항목이 없어요.</div>`;
 h += `</div><p class="note">벌점 항목은 금액을 음수로 적어요(예: −500). "하루 0회"는 제한 없음이에요.</p></section>
-<section class="group"><h2>보너스·벌칙 (자동 계산)</h2><div class="card">${(S.config?.bonuses||[]).map(b=>`<div class="row"><div class="main"><b>${esc(b.label)}</b><div class="sub">${b.type==="weeklyMiss"?`미달한 주마다 ${esc(kc.name)} 차감`:b.type==="weekly"?"달성한 주마다 지급 · 두 아이 공통":`한 달에 한 번 · 두 아이 공통${b.from?` · ${Number(b.from.slice(5,7))}월부터`:""}`}</div></div>
-<label class="chk"><input type="checkbox" id="bOn_${esc(b.id)}" ${b.off?"":"checked"}> 사용</label><input class="inp num mini" style="width:84px${b.type==="weeklyMiss"?";color:var(--minus)":""}" id="bAmt_${esc(b.id)}" type="number" inputmode="numeric" step="500" value="${b.type==="weeklyMiss"?-Math.abs(Number(b.amounts?.[k]??b.amount)||0):(Number(b.amount)||0)}" aria-label="금액"><button class="ib solid" data-bsave="${esc(b.id)}">저장</button></div>`).join("")||`<div class="empty">보너스가 없어요.</div>`}</div></section>
+<section class="group"><h2>보너스·벌칙 (자동 계산)</h2><div class="card">${(S.config?.bonuses||[]).map(b=>`<div class="row"><div class="main"><b>${esc(b.label)}</b><div class="sub">${b.type==="weeklyMiss"?`미달한 주마다 ${esc(kc.name)} 차감`:b.type==="weekly"?(b.per?`주 ${b.min}회 이상 하면 그 주 횟수 × 이 금액 (최대 ${b.cap||"-"}회) · 두 아이 공통`:"달성한 주마다 지급 · 두 아이 공통"):`한 달에 한 번 · 두 아이 공통${b.from?` · ${Number(b.from.slice(5,7))}월부터`:""}`}</div></div>
+<label class="chk"><input type="checkbox" id="bOn_${esc(b.id)}" ${b.off?"":"checked"}> 사용</label><input class="inp num mini" style="width:84px${b.type==="weeklyMiss"?";color:var(--minus)":""}" id="bAmt_${esc(b.id)}" type="number" inputmode="numeric" step="500" value="${b.type==="weeklyMiss"?-Math.abs(Number(b.amounts?.[k]??b.amount)||0):b.per?(Number(b.per)||0):(Number(b.amount)||0)}" aria-label="금액"><button class="ib solid" data-bsave="${esc(b.id)}">저장</button></div>`).join("")||`<div class="empty">보너스가 없어요.</div>`}</div></section>
 <section class="group"><h2>항목 추가</h2>
 <div class="inline"><input class="inp" id="nLabel" placeholder="예: 숙제 먼저 하기" style="flex:2 1 160px"><input class="inp num" id="nAmt" type="number" inputmode="numeric" step="500" placeholder="금액" style="flex:1 1 90px"></div>
-<div class="inline"><label class="chk"><input type="radio" name="nSign" value="1" checked> 상점</label><label class="chk"><input type="radio" name="nSign" value="-1"> 벌점</label><label class="chk"><input type="checkbox" id="nIly"> 일리 돌봄</label><label class="chk"><input type="checkbox" id="nKid" checked> 아이가 사진 인증</label><button class="ib solid" data-radd="1">추가</button></div>
+<div class="inline"><label class="chk"><input type="radio" name="nSign" value="1" checked> 상점</label><label class="chk"><input type="radio" name="nSign" value="-1"> 벌점</label><label class="chk"><input type="checkbox" id="nIly"> 일리 돌봄</label><label class="chk"><input type="checkbox" id="nKid" checked> 아이가 인증</label><label class="chk"><input type="checkbox" id="nPhoto"> 사진 필수</label><button class="ib solid" data-radd="1">추가</button></div>
 <p class="note">${esc(kc.name)}에게만 추가돼요.</p>
 </section>
 <section class="group"><button class="btn ghost" data-logout="1">로그아웃 (${esc(S.auth?.name||"")})</button>
@@ -700,13 +713,13 @@ function stampText(rule){ const n=new Date(); return `${n.getFullYear()}.${pad(n
 /* ---------- record sheet ---------- */
 let pending = null;
 function openSheet(rule){
-const kid = isKid();
+const kid = isKid(); const needPhoto = kid && rule.photo!==false;
 const def = S.month===THIS_MONTH ? TODAY : S.month+"-01";
 const max = S.month===THIS_MONTH ? TODAY : ymd(new Date(Number(S.month.slice(0,4)),Number(S.month.slice(5,7)),0));
-pending = {rule, file:null, hash:"", checks:null};
+pending = {rule, file:null, hash:"", checks:null, needPhoto};
 $("layer").innerHTML = `<div class="scrim" data-close="1"><div class="sheet" role="dialog" aria-label="${kid?"인증하기":"기록하기"}">
 <div class="head"><b>${esc(rule.label)}</b><span class="num ${rule.amount>0?"plus":"minus"}" style="font-weight:700;font-size:18px">${won(rule.amount)}원</span></div>
-${kid?`<label class="cam" for="sFile" id="camBox">${ICON.cam}<span>여기를 눌러 지금 사진 찍기</span><small style="font-weight:400">${esc(rule.label)}한 모습이 보이게 찍어주세요</small></label>
+${kid&&!needPhoto?`<p class="note" style="margin:0">이 항목은 사진 없이 보내요. 부모님이 확인하면 용돈에 더해져요.</p><ul class="checks" id="checks"></ul>`:kid?`<label class="cam" for="sFile" id="camBox">${ICON.cam}<span>여기를 눌러 지금 사진 찍기</span><small style="font-weight:400">${esc(rule.label)}한 모습이 보이게 찍어주세요</small></label>
 <input id="sFile" type="file" accept="image/*" capture="environment" hidden><ul class="checks" id="checks"></ul>`
 :`<div class="field"><label for="sDate">날짜</label><input class="inp" id="sDate" type="date" value="${def}" min="${S.month}-01" max="${max}"></div>`}
 <div class="field"><label for="sMemo">메모 (선택)</label><input class="inp" id="sMemo" placeholder="${kid?"예: 놀이터까지 30분":"예: 저녁 산책 30분"}"></div>
@@ -715,12 +728,12 @@ ${!kid?`<div class="field"><label>사진 (선택)</label><div class="inline"><im
 <button class="btn ghost" data-close="1">닫기</button></div></div>`;
 $("sGo").onclick = commit;
 if(kid) renderChecks();
-$("sFile").onchange = () => onPhoto($("sFile").files[0]);
+if($("sFile")) $("sFile").onchange = () => onPhoto($("sFile").files[0]);
 }
 function renderChecks(){
 if(!pending || !$("checks")) return;
 const c = pending.checks || {}; const u = todayUsed(pending.rule.id), mx = Number(pending.rule.max)||0;
-const items = [["photo","사진 찍기",c.photo],["fresh",`방금 찍은 사진 (${FRESH_MIN}분 이내, 앨범 사진 불가)`,c.fresh],["dup","이전에 쓴 사진이 아님",c.dup],["limit",mx?`오늘 횟수 남음 (${u}/${mx}회)`:"오늘 횟수 제한 없음",mx?u<mx:true]];
+const items = (pending.needPhoto?[["photo","사진 찍기",c.photo],["fresh",`방금 찍은 사진 (${FRESH_MIN}분 이내, 앨범 사진 불가)`,c.fresh],["dup","이전에 쓴 사진이 아님",c.dup]]:[]).concat([["limit",mx?`오늘 횟수 남음 (${u}/${mx}회)`:"오늘 횟수 제한 없음",mx?u<mx:true]]);
 $("checks").innerHTML = items.map(([id,l,v])=>`<li class="${v===true?"y":v===false?"n":""}"><span class="ic">${v===true?"✓":v===false?"!":"·"}</span><span>${esc(l)}${v===false&&c[id+"Msg"]?`<br><small>${esc(c[id+"Msg"])}</small>`:""}</span></li>`).join("");
 $("sGo").disabled = !items.every(i=>i[2]===true) || S.busy;
 }
@@ -747,7 +760,7 @@ const kid=isKid(); const k=curKid(); const r=pending.rule;
 const date = kid ? TODAY : ($("sDate").value || TODAY);
 const memo = $("sMemo").value.trim().slice(0,200);
 if(S.ledger[ledgerKey(k,date.slice(0,7))]?.paid){ toast("이미 정산된 달이에요"); return; }
-if(kid && !pending.file){ toast("사진 인증을 먼저 완료해 주세요"); return; }
+if(kid && pending.needPhoto && !pending.file){ toast("사진 인증을 먼저 완료해 주세요"); return; }
 S.busy=true; $("sGo").disabled=true; $("sGo").textContent=kid?"보내는 중…":"기록 중…";
 try{
 const photo = pending.file ? await toJpeg(pending.file, 1280, stampText(r)) : null;
@@ -880,22 +893,23 @@ b.disabled=true;
 try{ await call("setPin",{target:d.savepin,pin:v}); if(d.savepin==="parent"){ S.auth.pin=v; LS.set("ycn-auth",S.auth); } toast("비밀번호를 저장했어요"); }catch(e){ onErr(e); }
 await refresh(true); return; }
 if(d.clearpin){ b.disabled=true; await act(call("setPin",{target:d.clearpin,pin:""}),"비밀번호를 없앴어요"); return; }
-if(d.savebase){ const v=Math.max(0,Math.round(Number($("baseInp").value)||0)); b.disabled=true;
-await act(call("saveSettings",{settings:{["base_"+curKid()]:v}}),"기본 용돈을 저장했어요"); return; }
+if(d.savebase){ const v=Math.max(0,Math.round(Number($("baseInp").value)||0)); const vv=Math.max(0,Math.round(Number($("baseVacInp").value)||0));
+const vm=$("vacInp").value.split(/[^0-9]+/).map(Number).filter(n=>n>=1&&n<=12).join(","); b.disabled=true;
+await act(call("saveSettings",{settings:{["base_"+curKid()]:v,["baseVac_"+curKid()]:vv,vacMonths:vm}}),"기본 용돈을 저장했어요"); return; }
 if(d.redit){ S.editRule=d.redit; render(); return; }
 if(d.rcancel){ S.editRule=null; render(); return; }
 if(d.rsave){ const label=$("eLabel").value.trim(); const amt=Math.round(Number($("eAmt").value));
 if(!label||!amt){ toast("이름과 금액(0 제외)을 입력해 주세요"); return; }
 b.disabled=true; S.editRule=null;
-await act(call("saveRule",{kid:curKid(),rule:{id:d.rsave,label,amount:amt,ily:$("eIly").checked,kidOk:$("eKid").checked,max:Number($("eMax").value)||0}}),"수정했어요. 지난 기록의 금액은 그대로예요"); return; }
+await act(call("saveRule",{kid:curKid(),rule:{id:d.rsave,label,amount:amt,ily:$("eIly").checked,kidOk:$("eKid").checked,photo:$("ePhoto").checked,max:Number($("eMax").value)||0}}),"수정했어요. 지난 기록의 금액은 그대로예요"); return; }
 if(d.rdel){ if(!d.sure){ b.textContent="정말 삭제"; b.dataset.sure="1"; return; } b.disabled=true; S.editRule=null;
 await act(call("deleteRule",{kid:curKid(),id:d.rdel}),"항목을 삭제했어요. 지난 기록은 남아요"); return; }
 if(d.radd){ const label=$("nLabel").value.trim(); const amt=Math.abs(Math.round(Number($("nAmt").value)));
 const sign=Number(document.querySelector('input[name="nSign"]:checked').value);
 if(!label||!amt){ toast("이름과 금액을 입력해 주세요"); return; } b.disabled=true;
-await act(call("saveRule",{kid:curKid(),rule:{label,amount:sign*amt,ily:$("nIly").checked,kidOk:sign>0&&$("nKid").checked,max:sign>0?1:0}}),"추가했어요"); return; }
+await act(call("saveRule",{kid:curKid(),rule:{label,amount:sign*amt,ily:$("nIly").checked,kidOk:sign>0&&$("nKid").checked,photo:$("nPhoto").checked,max:sign>0?1:0}}),"추가했어요"); return; }
 if(d.bsave){ const list=JSON.parse(JSON.stringify(S.config?.bonuses||[])); const x=list.find(z=>z.id===d.bsave); if(!x) return;
-const bv=Math.abs(Math.round(Number($("bAmt_"+d.bsave).value)||0)); if(x.type==="weeklyMiss"){ x.amounts=Object.assign({},x.amounts,{[curKid()]:bv}); } else x.amount=bv; x.off=!$("bOn_"+d.bsave).checked; b.disabled=true;
+const bv=Math.abs(Math.round(Number($("bAmt_"+d.bsave).value)||0)); if(x.type==="weeklyMiss"){ x.amounts=Object.assign({},x.amounts,{[curKid()]:bv}); } else if(x.per) x.per=bv; else x.amount=bv; x.off=!$("bOn_"+d.bsave).checked; b.disabled=true;
 await act(call("saveSettings",{settings:{bonuses:list}}),"보너스를 저장했어요"); return; }
 });
 document.addEventListener("change", async ev => {

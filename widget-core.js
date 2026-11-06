@@ -28,6 +28,7 @@ function compute(cur, prev, kid) {
       if (!ok.length) continue; if (!ok.some(e => e.amount < 0)) bo += amt;
     } else if (b.type === "weekly") {
       const wk = {}; for (const e of ok) if (e.ruleId === b.ruleId) wk[weekKey(e.date)] = (wk[weekKey(e.date)] || 0) + 1;
+      if (b.per) { const min = Number(b.min) || 1, cap = Number(b.cap) || 99; for (const n of Object.values(wk)) if (n >= min) bo += Math.min(n, cap) * (Number(b.per) || 0); continue; }
       bo += Object.values(wk).filter(n => n >= (Number(b.min) || 1)).length * amt;
     } else if (b.type === "weeklyMiss") {
       const amt2 = Number(b.amounts?.[kid] ?? b.amount) || 0; const min = Number(b.min) || 1; if (!amt2) continue;
@@ -38,7 +39,10 @@ function compute(cur, prev, kid) {
       bo -= missed * amt2;
     }
   }
-  const base = Number(cur.config?.kids?.[kid]?.base) || 0;
+  const kc = cur.config?.kids?.[kid] || {};
+  const vm = String(cur.config?.vacMonths || "").split(/[^0-9]+/).filter(Boolean).map(Number);
+  const vac = (Number(kc.baseVac) || 0) > 0 && vm.includes(Number(month.slice(5, 7)));
+  const base = vac ? Number(kc.baseVac) || 0 : Number(kc.base) || 0;
   let pay = base + p + m + bo; if (cur.config?.floorZero !== false && pay < 0) pay = 0;
   const todayN = ents.filter(e => e.date === today && st(e) !== "rejected").length;
   const last = ents.filter(e => st(e) !== "rejected").sort((a, b) => (b.ts || 0) - (a.ts || 0))[0] || null;
@@ -79,6 +83,14 @@ async function bgImage(name, S) {
   try { return Image.fromData(Data.fromBase64String(d)); } catch (e) { return null; }
 }
 
+// 위젯을 누르면 사파리 대신 Scriptable 안에서 주소창 없는 전체 화면으로 앱을 열어요.
+function openURL() { try { return "scriptable:///run/" + encodeURIComponent(Script.name()) + "?open=1"; } catch (e) { return APP; } }
+async function openApp() {
+  const wv = new WebView();
+  await wv.loadURL(APP);
+  await wv.present(true);
+}
+
 /* ---------- 그리기 ---------- */
 const won = n => (n < 0 ? "−" : "") + Math.abs(Math.round(n)).toLocaleString("ko-KR");
 const krw = n => won(n) + "원";
@@ -94,7 +106,7 @@ function avatar(st, img, kid, size) {
 }
 function kidBlock(parent, r, kid, img, opt) {
   const box = parent.addStack(); box.layoutVertically(); box.backgroundColor = new Color(C.card, 0.84); box.cornerRadius = 14;
-  box.setPadding(8, 10, 8, 10); box.url = APP;
+  box.setPadding(8, 10, 8, 10); box.url = openURL();
   const top = box.addStack(); top.centerAlignContent(); avatar(top, img, kid, opt.av); top.addSpacer(6);
   txt(top, kid.short, opt.name, C.ink, "b"); top.addSpacer();
   if (r.wn && opt.parent) { const b = top.addStack(); b.backgroundColor = new Color(C.warn); b.cornerRadius = 8; b.setPadding(1, 6, 1, 6); txt(b, "대기 " + r.wn, 10, "#1b1f27", "b"); }
@@ -134,7 +146,7 @@ async function build(opts) {
   } catch (e) { err = String(e.message || e); cur = S.get("cur"); prev = S.get("prev"); at = S.get("at") || at; stale = true; }
 
   const family = config.widgetFamily || "medium";
-  const w = new ListWidget(); w.url = APP; w.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
+  const w = new ListWidget(); w.url = openURL(); w.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
   if (family.startsWith("accessory")) {
     if (!cur) { w.addText("윤호채원: 연결 안 됨"); return w; }
     const rs = kids.map(k => [k, compute(cur, prev, k.id)]);
@@ -172,6 +184,7 @@ async function build(opts) {
 }
 
 async function main(opts = {}) {
+  if (!config.runsInWidget && !config.runsInAccessoryWidget && args.queryParameters && args.queryParameters.open) { await openApp(); Script.complete(); return; }
   const w = await build(opts);
   if (config.runsInWidget || config.runsInAccessoryWidget) Script.setWidget(w);
   else { const f = String(args.widgetParameter || opts.preview || "medium"); f === "small" ? await w.presentSmall() : f === "large" ? await w.presentLarge() : await w.presentMedium(); }
