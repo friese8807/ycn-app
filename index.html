@@ -359,7 +359,7 @@ if(IMG[id]==="loading") return "";
 const cached = persist ? LS.get("img:"+id, null) : null;
 if(cached){ IMG[id]=cached; return cached; }
 IMG[id]="loading";
-call("image",{id}).then(d=>{ IMG[id]=d.url; if(persist) LS.set("img:"+id, d.url); clearTimeout(imgTimer); imgTimer=setTimeout(()=>{ if(!sheetOpen()) render(); applyBg(); },60); })
+call("image",{id}).then(d=>{ IMG[id]=d.url; if(persist) LS.set("img:"+id, d.url); clearTimeout(imgTimer); imgTimer=setTimeout(()=>{ bgRender(); applyBg(); },60); })
 .catch(()=>{ IMG[id]="err:"; });
 return "";
 }
@@ -661,7 +661,7 @@ return `<section class="group"><h2 style="display:flex;align-items:center">최�
 }
 function loadAccess(){
 call("access").then(d=>{ S.acc=d.rows||[]; }).catch(()=>{ S.acc="err"; })
-.then(()=>{ if(S.tab==="setup" && !sheetOpen()) render(); });
+.then(()=>{ if(S.tab==="setup") bgRender(); });
 }
 function renderSetup(){
 const k=curKid(); const kc = kidCfg(k) || {name:kidName(k), base:0, rules:[]};
@@ -874,11 +874,16 @@ for(const m of [monthAdd(month,-1),monthAdd(month,1)]){
 if(m>THIS_MONTH) continue; const c=S.adj[m];
 if(c && (c.busy || (m!==THIS_MONTH && Date.now()-c.at<300000) || (m===THIS_MONTH && Date.now()-c.at<30000))) continue;
 S.adj[m]=Object.assign({ent:[]},c,{busy:true});
-try{ const d=await call("load",{month:m}); S.adj[m]={ent:d.entries||[],at:Date.now()}; if(S.month===month && !sheetOpen()) render(); }
+try{ const d=await call("load",{month:m}); S.adj[m]={ent:d.entries||[],at:Date.now()}; if(S.month===month) bgRender(); }
 catch(e){ S.adj[m]=Object.assign({},c||{ent:[]},{at:Date.now()}); }
 }
 }
-async function refresh(silent){
+// 자동 새로고침 때 입력 중이거나 아직 저장 안 한 칸이 있으면 화면을 다시 그리지 않아요(입력값이 지워지지 않게).
+function editing(){ const v=$("view"); if(!v) return false; const a=document.activeElement;
+if(a&&v.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return true;
+return [...v.querySelectorAll("input,textarea")].some(i=>i.type==="checkbox"||i.type==="radio"?i.checked!==i.defaultChecked:i.type!=="file"&&i.value!==i.defaultValue); }
+function bgRender(){ if(!sheetOpen() && !editing()) render(); }
+async function refresh(silent, bg){
 if(!S.auth) return;
 const seq=++loadSeq; const month=S.month;
 try{
@@ -894,7 +899,7 @@ if(seq!==loadSeq) return;
 if(e?.code==="auth"){ logout("비밀번호가 바뀌었어요. 다시 로그인해 주세요"); return; }
 S.loadNote=e?.message||"불러오지 못했어요"; if(!silent) toast(S.loadNote);
 }
-if(!sheetOpen()) render(); else if(isKid()) renderChecks();
+if(!sheetOpen()){ if(!bg||!editing()) render(); } else if(isKid()) renderChecks();
 }
 async function boot(){
 try{ const d=await call("boot"); S.pub=d.cfg; TODAY=d.today; THIS_MONTH=TODAY.slice(0,7); if(!S.auth) S.month=THIS_MONTH; }
@@ -972,8 +977,8 @@ await refresh(true);
 }
 });
 document.addEventListener("keydown", ev => { if(ev.key==="Escape") closeSheet(); });
-document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && S.auth && !sheetOpen()) refresh(true); });
-setInterval(()=>{ if(!document.hidden && S.auth && !sheetOpen() && !S.busy) refresh(true); }, 30000);
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && S.auth && !sheetOpen()) refresh(true,true); });
+setInterval(()=>{ if(!document.hidden && S.auth && !sheetOpen() && !S.busy) refresh(true,true); }, 30000);
 
 function applyRestored(d){
 if(!d || !d.auth || !d.auth.who) return false;

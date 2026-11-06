@@ -293,7 +293,7 @@ function load_(month, me, st) {
 
 function accounts_(st) {
   const o = {};
-  KIDS.forEach(function (k) { o[k] = { bank: String(st['bank_' + k] || ''), no: String(st['acct_' + k] || '') }; });
+  KIDS.forEach(function (k) { o[k] = { bank: String(st['bank_' + k] || ''), no: String(st['acct_' + k] || '').replace(/^'/, '') }; });
   return o;
 }
 function image_(req, st) {
@@ -415,7 +415,7 @@ function saveSettings_(req, me) {
   });
   KIDS.forEach(function (k) {
     if (s['bank_' + k] != null) setSetting_('bank_' + k, String(s['bank_' + k]).slice(0, 20));
-    if (s['acct_' + k] != null) setSetting_('acct_' + k, String(s['acct_' + k]).replace(/[^0-9-]/g, '').slice(0, 30));
+    if (s['acct_' + k] != null) { var no = String(s['acct_' + k]).replace(/[^0-9-]/g, '').slice(0, 30); setSetting_('acct_' + k, no ? "'" + no : ''); } // ' = 시트가 날짜·숫자로 바꾸지 않게 글자로 저장
   });
   if (s.vacMonths != null) setSetting_('vacMonths', String(s.vacMonths).replace(/[^0-9,]/g, '').slice(0, 40));
   if (s.floorZero != null) setSetting_('floorZero', !!s.floorZero);
