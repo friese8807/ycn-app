@@ -205,6 +205,7 @@ display:flex;flex-direction:column;gap:12px;max-height:90vh;overflow:auto}
 .busypill{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:31;transform:translate(-50%,12px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
 display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.15);font-size:14px;font-weight:600;white-space:nowrap}
 .busypill.on{opacity:1;transform:translate(-50%,0)}
+body .busypill.top{top:calc(14px + env(safe-area-inset-top,0px));bottom:auto!important}
 .bp-dog{display:inline-block;font-size:18px;animation:bdog .5s ease-in-out infinite alternate}
 @keyframes bdog{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-4px) rotate(6deg)}}
 .bp-dots{display:inline-flex;gap:3px}.bp-dots i{width:5px;height:5px;border-radius:50%;background:var(--kid);animation:bdot 1s infinite}
@@ -233,7 +234,7 @@ padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:c
 .rule .cnt{top:4px;right:4px;min-width:18px;height:18px;font-size:10.5px;padding:0 5px}
 @media (min-width:520px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
-<script>(function(){var B="1794182354";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
+<script>(function(){var B="1794182700";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
 if(!/^[0-9]+$/.test(v)||v===B)return;try{if(sessionStorage.getItem("ycn-up")===v)return;sessionStorage.setItem("ycn-up",v)}catch(e){}
 location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
@@ -373,7 +374,7 @@ function busyUI(on){
 let bar=document.querySelector(".busybar"), pill=document.querySelector(".busypill");
 if(on){ if(!bar){ bar=document.createElement("div"); bar.className="busybar"; document.body.appendChild(bar); }
  if(!pill){ pill=document.createElement("div"); pill.className="busypill"; pill.setAttribute("role","status"); pill.innerHTML='<span class="bp-dog">🐕</span><span>잠깐만요, 처리 중이에요</span><span class="bp-dots"><i></i><i></i><i></i></span>'; document.body.appendChild(pill); }
- requestAnimationFrame(()=>bar.classList.add("on")); clearTimeout(BUSYTM); BUSYTM=setTimeout(()=>pill.classList.add("on"),350); }
+ pill.classList.toggle("top",sheetOpen()); requestAnimationFrame(()=>bar.classList.add("on")); clearTimeout(BUSYTM); BUSYTM=setTimeout(()=>pill.classList.add("on"),350); }
 else { clearTimeout(BUSYTM); bar?.classList.remove("on"); pill?.classList.remove("on"); document.querySelectorAll(".is-busy").forEach(x=>x.classList.remove("is-busy")); }
 }
 const rawCall=call;
