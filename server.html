@@ -285,7 +285,7 @@ function load_(month, me, st) {
   ledger_().forEach(function (l) { if (l.month === month &amp;&amp; (!me.kid || l.kid === me.kid)) led[l.kid + '_' + l.month] = clean_(l); });
   return {
     config: { kids: kids, bonuses: bonuses, vacMonths: String(st.vacMonths || ''),
-      accounts: me.role === 'parent' ? accounts_(st) : {}, floorZero: st.floorZero === '' || st.floorZero == null ? true : bool_(st.floorZero),
+      accounts: me.role === 'parent' ? accounts_(st) : {}, floorZero: st.floorZero === '' || st.floorZero == null ? true : bool_(st.floorZero), momMinus: bool_(st.momMinus),
       ily: String(st.photo_ily || ''), bg: String(st.photo_bg || ''), hasParentPin: !!st.parentPinHash },
     entries: ents, ledger: led, today: today_(), month: month, me: me
   };
@@ -335,6 +335,7 @@ function addEntry_(req, me, st) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date &gt; today_()) throw fail_('bad', '날짜가 올바르지 않아요');
   if (isPaid_(kid, date.slice(0, 7))) throw fail_('paid', '이미 정산이 끝난 달이에요');
   const hashv = String(req.photoHash || '').slice(0, 64);
+  if (!asKid &amp;&amp; rule.amount &lt; 0 &amp;&amp; me.name === '엄마' &amp;&amp; !bool_(st.momMinus)) throw fail_('forbidden', '벌점은 아빠만 줄 수 있어요');
   if (asKid) {
     if (!(rule.kidOk &amp;&amp; rule.amount &gt; 0)) throw fail_('bad', '아이가 인증할 수 없는 항목이에요');
     if (rule.photo &amp;&amp; !req.photo) throw fail_('bad', '인증 사진이 필요해요');
@@ -419,6 +420,7 @@ function saveSettings_(req, me) {
   });
   if (s.vacMonths != null) setSetting_('vacMonths', String(s.vacMonths).replace(/[^0-9,]/g, '').slice(0, 40));
   if (s.floorZero != null) setSetting_('floorZero', !!s.floorZero);
+  if (s.momMinus != null) { if (me.name !== '아빠') throw fail_('forbidden', '아빠만 바꿀 수 있어요'); setSetting_('momMinus', !!s.momMinus); }
   if (s.bonuses != null) setSetting_('bonuses', JSON.stringify(s.bonuses).slice(0, 5000));
   return {};
 }

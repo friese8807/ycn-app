@@ -234,7 +234,7 @@ padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:c
 .rule .cnt{top:4px;right:4px;min-width:18px;height:18px;font-size:10.5px;padding:0 5px}
 @media (min-width:520px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
-<script>(function(){var B="1794182700";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
+<script>(function(){var B="1794403140";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
 if(!/^[0-9]+$/.test(v)||v===B)return;try{if(sessionStorage.getItem("ycn-up")===v)return;sessionStorage.setItem("ycn-up",v)}catch(e){}
 location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
@@ -522,9 +522,11 @@ const key = hit ? hit[1] : (r.amount>0?"star":"alert");
 return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${RI[key]}</svg>`;
 }
 
+function momLocked(){ return S.auth?.who==="parent" && S.auth?.name==="엄마" && !S.config?.momMinus; }
 function ruleBtns(rules, cnt, dis, kidView){
 return `<div class="grid">`+rules.map(r=>{
 let lim="", off=dis;
+if(!kidView && r.amount<0 && momLocked()){ off=true; lim=`<span class="lim">🔒 아빠만</span>`; }
 if(kidView){ const u=todayUsed(r.id); const mx=Number(r.max)||0;
 if(mx){ lim=`<span class="lim num">오늘 ${u}/${mx}회</span>`; if(u>=mx) off=true; } }
 return `<button class="rule ${r.amount>0?"p":"m"} ${r.ily&&r.amount>0?"d":""}" data-rule="${esc(r.id)}" ${off?"disabled":""}>
@@ -726,6 +728,8 @@ let h = `<div class="stack">
 <div class="inline"><span class="note" style="min-width:56px">방학 달</span><input class="inp" id="vacInp" inputmode="numeric" value="${esc(S.config?.vacMonths||"1,2,7,8")}" placeholder="예: 1,2,7,8" style="flex:1"><button class="ib solid" data-savebase="1">저장</button></div>
 <p class="note">방학 달에는 방학 용돈이 기본 용돈이 돼요. 방학 달은 두 아이 공통이에요.</p>
 <label class="chk"><input type="checkbox" id="floorChk" ${S.config?.floorZero!==false?"checked":""}> 벌점이 많아도 지급액은 0원 아래로 내려가지 않게 (두 아이 공통)</label>
+${S.auth?.name==="아빠"?`<label class="chk"><input type="checkbox" id="momChk" ${S.config?.momMinus?"checked":""}> 엄마도 벌점을 줄 수 있게 (끄면 엄마는 상점만)</label>`
+:`<p class="note">벌점은 ${S.config?.momMinus?"엄마도 줄 수 있어요":"아빠만 줄 수 있어요"}. 바꾸려면 아빠로 들어와 주세요.</p>`}
 </section>
 <section class="group"><h2>${esc(kc.name)} 용돈 받을 계좌</h2>
 <div class="inline"><input class="inp" id="bankInp" value="${esc(S.config?.accounts?.[k]?.bank||DEFAULT_BANK[k]||"")}" placeholder="은행" style="flex:1 1 100px" aria-label="은행"><input class="inp num" id="acctInp" inputmode="numeric" value="${esc(S.config?.accounts?.[k]?.no||"")}" placeholder="계좌번호" style="flex:2 1 160px" aria-label="계좌번호"><button class="ib solid" data-saveacct="1">저장</button></div>
@@ -1009,6 +1013,7 @@ const t=ev.target;
 if(/^b(On|Amt)_/.test(t.id||"")){ const id=t.id.replace(/^b(On|Amt)_/,""); const list=JSON.parse(JSON.stringify(S.config?.bonuses||[])); const x=list.find(z=>z.id===id); if(!x) return;
 const bv=Math.abs(Math.round(Number($("bAmt_"+id).value)||0)); if(x.type==="weeklyMiss"){ x.amounts=Object.assign({},x.amounts,{[curKid()]:bv}); } else if(x.per) x.per=bv; else x.amount=bv; x.off=!$("bOn_"+id).checked;
 await act(call("saveSettings",{settings:{bonuses:list}}),"저장했어요"); return; }
+if(t.id==="momChk"){ await act(call("saveSettings",{settings:{momMinus:t.checked}}), t.checked?"이제 엄마도 벌점을 줄 수 있어요":"이제 벌점은 아빠만 줄 수 있어요"); return; }
 if(t.id==="floorChk"){ await act(call("saveSettings",{settings:{floorZero:t.checked}})); return; }
 if(t.dataset?.target && t.files?.[0]){
 const target=t.dataset.target; toast("사진 올리는 중…");
