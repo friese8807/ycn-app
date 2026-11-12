@@ -1,9 +1,9 @@
 // 수급 레이더 위젯 — 아이폰 Scriptable 앱용
 // 사용법: Scriptable 앱 > + > 이 내용 전체 붙여넣기 > 이름 "수급 레이더"
 //        홈 화면 길게 누르기 > 위젯 추가 > Scriptable > 작은/중간 크기 > 위젯 편집에서 Script 선택
-// 위젯 편집의 Parameter 칸에 종목코드(예: 000660)를 넣으면 그 종목을 보여 줍니다.
+// 위젯 편집의 Parameter 칸에 종목코드(예: SK하이닉스 000660)를 넣으면 그 종목을 보여 줍니다.
 
-const STOCK = (args.widgetParameter || "000660").trim();   // 기본 종목
+const STOCK = (args.widgetParameter || "005930").trim();   // 기본 종목
 const WEBAPP_URL = "https://friese8807.github.io/ycn-app/supply-radar/";                                      // 위젯을 눌렀을 때 열 웹앱 주소(선택)
 
 const C = {
