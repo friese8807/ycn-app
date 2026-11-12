@@ -49,3 +49,5 @@ async function get(url) {
   fs.writeFileSync(path.join(process.argv[2] || 'out', 'data.json'), JSON.stringify(out));
   console.log('markets', markets.map(x => x.code + ':' + JSON.stringify(x.flow)).join(' '), '| stocks', stocks.length, '| errors', errors.length);
 })();
+(async()=>{ const j = await get('https://polling.finance.naver.com/api/realtime/domestic/stock/005930'); console.log('RAW', JSON.stringify(j).slice(0,2500));
+const t = await get('https://m.stock.naver.com/api/stock/005930/trend?pageSize=2'); console.log('RAWT', JSON.stringify(t).slice(0,1200)); })();
