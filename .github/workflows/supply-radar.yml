@@ -1,0 +1,40 @@
+name: 수급 레이더 데이터
+
+on:
+  schedule:
+    # 평일 08:00~17:59 (한국시간) 5분마다, 그 밖에는 하루 몇 번
+    - cron: '*/5 23 * * 0-4'
+    - cron: '*/5 0-8 * * 1-5'
+    - cron: '7 10,13 * * 1-5'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['supply-radar/**', '.github/workflows/supply-radar.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: supply-radar
+  cancel-in-progress: true
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 네이버 증권에서 수급 받기
+        run: node supply-radar/fetch.cjs out
+      - name: 데이터 브랜치에 올리기
+        run: |
+          cd out
+          git init -q -b supply-radar-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          git commit -q -m "data $(date -u +%FT%TZ)"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" supply-radar-data
