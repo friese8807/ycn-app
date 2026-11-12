@@ -40,21 +40,13 @@ const KIDS = ['yunho', 'chaewon'];
 const PHOTO_KEYS = ['photo_yunho', 'photo_chaewon', 'photo_ily', 'photo_bg'];
 
 function doGet() {
-  // 화면 파일(Index.html)은 시트와 같은 드라이브 폴더에서 가장 최근 것을 읽어요.
-  // 폴더에 없으면 이 프로젝트 안의 Index 파일을 씁니다.
-  var html = '';
-  try { html = appParts_(); } catch (e) { html = ''; }
-  if (!html) {
-    try {
-      var file = appFile_();
-      if (file) html = file.getBlob().getDataAsString('UTF-8');
-    } catch (e) { html = ''; }
-  }
-  var out = html ? HtmlService.createHtmlOutput(html) : HtmlService.createHtmlOutputFromFile('Index');
-  return out.setTitle('윤호, 채원이네')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
-    .addMetaTag('apple-mobile-web-app-capable', 'yes')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  // 앱 화면은 github.io에서 열어요. 이 주소로 들어오면 그쪽으로 안내만 해요.
+  var url = 'https://friese8807.github.io/ycn-app/';
+  return HtmlService.createHtmlOutput('&lt;meta charset="utf-8"&gt;&lt;div style="font:16px sans-serif;text-align:center;padding:48px 16px"&gt;'
+    + '&lt;p&gt;여기는 서버 주소예요. 앱은 아래에서 열어주세요.&lt;/p&gt;&lt;p&gt;&lt;a href="' + url + '" target="_top" style="font-weight:700"&gt;윤호, 채원이네 열기&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;'
+    + '&lt;script&gt;try{window.top.location.href="' + url + '"}catch(e){}&lt;/script&gt;')
+    .setTitle('윤호, 채원이네')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 // 홈 화면 앱(github.io)이 화면 없이 데이터만 주고받는 입구예요.
 function doPost(e) {
