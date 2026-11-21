@@ -84,6 +84,10 @@ background:linear-gradient(180deg,var(--sky1) 0,var(--sky2) 100%);border:1px sol
 .hero-in{position:relative;text-align:center;padding-top:18px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .hero .place{font-size:12px;font-weight:600;letter-spacing:.12em;color:var(--ink);opacity:.7}
 .hero h1{font-size:34px;text-shadow:0 0 10px var(--sky2),0 0 3px var(--sky2)}
+.hero{transition:height .25s ease}
+#rulesBox>summary::-webkit-details-marker{display:none}
+body.slim .hero{height:56px;align-items:center} body.slim .hero .sky,body.slim .hero .place{display:none}
+body.slim .hero-in{padding-top:0} body.slim .hero h1{font-size:20px}
 .month{display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px}
 .month button{border:0;background:none;width:34px;height:34px;border-radius:50%;font-size:18px;color:var(--muted)}
 .month button:disabled{opacity:.3;cursor:default}
@@ -234,7 +238,7 @@ padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:c
 .rule .cnt{top:4px;right:4px;min-width:18px;height:18px;font-size:10.5px;padding:0 5px}
 @media (min-width:520px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
-<script>(function(){var B="1795279096";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
+<script>(function(){var B="1795279518";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
 if(!/^[0-9]+$/.test(v)||v===B)return;try{if(sessionStorage.getItem("ycn-up")===v)return;sessionStorage.setItem("ycn-up",v)}catch(e){}
 location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
@@ -536,7 +540,7 @@ ${cnt[r.id]?`<span class="cnt num">${cnt[r.id]}</span>`:""}
 
 /* ---------- render ---------- */
 function render(){
-document.body.className = "k-"+(curKid()||S.kid); document.documentElement.classList.toggle("pmode", !!S.auth && !isKid());
+document.body.className = "k-"+(curKid()||S.kid)+(S.auth&&S.tab!=="check"?" slim":""); document.documentElement.classList.toggle("pmode", !!S.auth && !isKid());
 applyBg();
 $("mLabel").textContent = monthLabel(S.month);
 $("mNext").disabled = S.month>=THIS_MONTH;
@@ -725,17 +729,17 @@ let h = `<div class="stack">
 <section class="group"><h2>${esc(kc.name)} 기본 용돈</h2>
 <div class="inline"><span class="note" style="min-width:56px">평소·학기</span><input class="inp num" id="baseInp" type="number" inputmode="numeric" step="1000" value="${Number(kc.base)||0}" style="flex:1"></div>
 <div class="inline"><span class="note" style="min-width:56px">방학</span><input class="inp num" id="baseVacInp" type="number" inputmode="numeric" step="1000" value="${Number(kc.baseVac)||""}" placeholder="비우면 평소와 같음" style="flex:1"></div>
-<div class="inline"><span class="note" style="min-width:56px">방학 달</span><input class="inp" id="vacInp" inputmode="numeric" value="${esc(S.config?.vacMonths||"1,2,7,8")}" placeholder="예: 1,2,7,8" style="flex:1"><button class="ib solid" data-savebase="1">저장</button></div>
-<p class="note">방학 달에는 방학 용돈이 기본 용돈이 돼요. 방학 달은 두 아이 공통이에요.</p>
+<div class="inline"><span class="note" style="min-width:56px">방학 달</span><input class="inp" id="vacInp" inputmode="numeric" value="${esc(S.config?.vacMonths||"1,2,7,8")}" placeholder="예: 1,2,7,8" style="flex:1"></div>
+<p class="note">칸을 고치고 나오면 바로 저장돼요. 방학 달에는 방학 용돈이 기본 용돈이 되고, 방학 달은 두 아이 공통이에요.</p>
 <label class="chk"><input type="checkbox" id="floorChk" ${S.config?.floorZero!==false?"checked":""}> 벌점이 많아도 지급액은 0원 아래로 내려가지 않게 (두 아이 공통)</label>
 ${S.auth?.name==="아빠"?`<label class="chk"><input type="checkbox" id="momChk" ${S.config?.momMinus?"checked":""}> 엄마도 벌점을 줄 수 있게 (끄면 엄마는 상점만)</label>`
 :`<p class="note">벌점은 ${S.config?.momMinus?"엄마도 줄 수 있어요":"아빠만 줄 수 있어요"}. 바꾸려면 아빠로 들어와 주세요.</p>`}
 </section>
 <section class="group"><h2>${esc(kc.name)} 용돈 받을 계좌</h2>
-<div class="inline"><input class="inp" id="bankInp" value="${esc(S.config?.accounts?.[k]?.bank||DEFAULT_BANK[k]||"")}" placeholder="은행" style="flex:1 1 100px" aria-label="은행"><input class="inp num" id="acctInp" inputmode="numeric" value="${esc(S.config?.accounts?.[k]?.no||"")}" placeholder="계좌번호" style="flex:2 1 160px" aria-label="계좌번호"><button class="ib solid" data-saveacct="1">저장</button></div>
-<p class="note">정산 탭에서 토스 송금 화면이 이 계좌와 금액으로 채워져 열려요. 부모님만 볼 수 있어요.</p>
+<div class="inline"><input class="inp" id="bankInp" value="${esc(S.config?.accounts?.[k]?.bank||DEFAULT_BANK[k]||"")}" placeholder="은행" style="flex:1 1 100px" aria-label="은행"><input class="inp num" id="acctInp" inputmode="numeric" value="${esc(S.config?.accounts?.[k]?.no||"")}" placeholder="계좌번호" style="flex:2 1 160px" aria-label="계좌번호"></div>
+<p class="note">칸을 고치고 나오면 바로 저장돼요. 정산 탭에서 토스 송금 화면이 이 계좌와 금액으로 채워져 열려요. 부모님만 볼 수 있어요.</p>
 </section>
-<section class="group"><h2>${esc(kc.name)} 상벌 항목</h2><div class="card">`;
+<section class="group"><details id="rulesBox" ${S.rulesOpen||S.editRule?"open":""}><summary class="ib" style="display:block;text-align:center;list-style:none">${esc(kc.name)} 상벌 항목 ${rules.length}개 · ${S.rulesOpen||S.editRule?"접기 ▲":"펼쳐서 수정 ▼"}</summary><div class="card" style="margin-top:8px">`;
 for(const r of rules){
 if(S.editRule===r.id){
 h += `<div class="edrow"><input class="inp" id="eLabel" value="${esc(r.label)}" aria-label="항목 이름"><input class="inp num" id="eAmt" type="number" inputmode="numeric" step="500" value="${Math.abs(r.amount)}" aria-label="금액">
@@ -750,7 +754,7 @@ h += `<div class="row"><div class="main"><b>${esc(r.label)}</b>${tags?`<div clas
 }
 }
 if(!rules.length) h += `<div class="empty">항목이 없어요.</div>`;
-h += `</div><p class="note">금액은 숫자만 적어요. 상점·벌점은 그대로 유지돼요. "하루 0회"는 제한 없음이에요.</p></section>
+h += `</div></details><p class="note">금액은 숫자만 적어요. 상점·벌점은 그대로 유지돼요. "하루 0회"는 제한 없음이에요.</p></section>
 <section class="group"><h2>보너스·벌칙 (자동 계산)</h2><div class="card">${(S.config?.bonuses||[]).map(b=>{ const miss=b.type==="weeklyMiss";
 const v=miss?Math.abs(Number(b.amounts?.[k]??b.amount)||0):b.per?(Number(b.per)||0):(Number(b.amount)||0);
 const inp=`<input class="inp num mini" style="width:96px;display:inline-block${miss?";color:var(--minus)":""}" id="bAmt_${esc(b.id)}" type="number" inputmode="numeric" step="500" min="0" value="${v}" aria-label="${esc(b.label)} 금액">`;
@@ -986,11 +990,6 @@ b.disabled=true;
 try{ await call("setPin",{target:d.savepin,pin:v}); if(d.savepin==="parent"){ S.auth.pin=v; LS.set("ycn-auth",S.auth); } toast("비밀번호를 저장했어요"); }catch(e){ onErr(e); }
 await refresh(true); return; }
 if(d.clearpin){ b.disabled=true; await act(call("setPin",{target:d.clearpin,pin:""}),"비밀번호를 없앴어요"); return; }
-if(d.savebase){ const v=Math.max(0,Math.round(Number($("baseInp").value)||0)); const vv=Math.max(0,Math.round(Number($("baseVacInp").value)||0));
-const vm=$("vacInp").value.split(/[^0-9]+/).map(Number).filter(n=>n>=1&&n<=12).join(","); b.disabled=true;
-await act(call("saveSettings",{settings:{["base_"+curKid()]:v,["baseVac_"+curKid()]:vv,vacMonths:vm}}),"기본 용돈을 저장했어요"); return; }
-if(d.saveacct){ const bank=$("bankInp").value.trim().slice(0,20); const no=$("acctInp").value.replace(/[^0-9-]/g,"").slice(0,30); b.disabled=true;
-await act(call("saveSettings",{settings:{["bank_"+curKid()]:bank,["acct_"+curKid()]:no}}),"계좌를 저장했어요"); return; }
 if(d.copyacct){ const ac=S.config?.accounts?.[d.copyacct]; const t=totals(d.copyacct); const txt=`${ac.bank} ${ac.no} ${t.pay}`;
 try{ await navigator.clipboard.writeText(txt); toast("복사했어요: "+txt); }catch(e){ toast(txt); } return; }
 if(d.loadacc){ S.acc="loading"; render(); loadAccess(); return; }
@@ -1008,11 +1007,16 @@ if(!label||!amt){ toast("이름과 금액을 입력해 주세요"); return; } b.
 await act(call("saveRule",{kid:curKid(),rule:{label,amount:sign*amt,ily:$("nIly").checked,kidOk:sign>0&&$("nKid").checked,photo:$("nPhoto").checked,max:sign>0?1:0}}),"추가했어요"); return; }
 if(d.namt){ $("nAmt").value=d.namt; return; }
 });
+document.addEventListener("toggle", e => { const d=e.target; if(d.id!=="rulesBox") return; S.rulesOpen=d.open; if(!d.open&&S.editRule){ S.editRule=null; render(); return; }
+const sm=d.querySelector("summary"); sm.textContent=sm.textContent.replace(/ · .*$/, d.open?" · 접기 ▲":" · 펼쳐서 수정 ▼"); }, true);
 document.addEventListener("change", async ev => {
 const t=ev.target;
 if(/^b(On|Amt)_/.test(t.id||"")){ const id=t.id.replace(/^b(On|Amt)_/,""); const list=JSON.parse(JSON.stringify(S.config?.bonuses||[])); const x=list.find(z=>z.id===id); if(!x) return;
 const bv=Math.abs(Math.round(Number($("bAmt_"+id).value)||0)); if(x.type==="weeklyMiss"){ x.amounts=Object.assign({},x.amounts,{[curKid()]:bv}); } else if(x.per) x.per=bv; else x.amount=bv; x.off=!$("bOn_"+id).checked;
 await act(call("saveSettings",{settings:{bonuses:list}}),"저장했어요"); return; }
+if(t.id==="baseInp"||t.id==="baseVacInp"){ const v=Math.max(0,Math.round(Number(t.value)||0)); await act(call("saveSettings",{settings:{[(t.id==="baseInp"?"base_":"baseVac_")+curKid()]:v}}),"기본 용돈을 저장했어요"); return; }
+if(t.id==="vacInp"){ const vm=t.value.split(/[^0-9]+/).map(Number).filter(n=>n>=1&&n<=12).join(","); await act(call("saveSettings",{settings:{vacMonths:vm}}),"방학 달을 저장했어요"); return; }
+if(t.id==="bankInp"||t.id==="acctInp"){ const bank=$("bankInp").value.trim().slice(0,20); const no=$("acctInp").value.replace(/[^0-9-]/g,"").slice(0,30); await act(call("saveSettings",{settings:{["bank_"+curKid()]:bank,["acct_"+curKid()]:no}}),"계좌를 저장했어요"); return; }
 if(t.id==="momChk"){ await act(call("saveSettings",{settings:{momMinus:t.checked}}), t.checked?"이제 엄마도 벌점을 줄 수 있어요":"이제 벌점은 아빠만 줄 수 있어요"); return; }
 if(t.id==="floorChk"){ await act(call("saveSettings",{settings:{floorZero:t.checked}})); return; }
 if(t.dataset?.target && t.files?.[0]){
