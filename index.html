@@ -234,7 +234,7 @@ padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:c
 .rule .cnt{top:4px;right:4px;min-width:18px;height:18px;font-size:10.5px;padding:0 5px}
 @media (min-width:520px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
-<script>(function(){var B="1794403140";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
+<script>(function(){var B="1795279096";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
 if(!/^[0-9]+$/.test(v)||v===B)return;try{if(sessionStorage.getItem("ycn-up")===v)return;sessionStorage.setItem("ycn-up",v)}catch(e){}
 location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
@@ -374,7 +374,7 @@ function busyUI(on){
 let bar=document.querySelector(".busybar"), pill=document.querySelector(".busypill");
 if(on){ if(!bar){ bar=document.createElement("div"); bar.className="busybar"; document.body.appendChild(bar); }
  if(!pill){ pill=document.createElement("div"); pill.className="busypill"; pill.setAttribute("role","status"); pill.innerHTML='<span class="bp-dog">🐕</span><span>잠깐만요, 처리 중이에요</span><span class="bp-dots"><i></i><i></i><i></i></span>'; document.body.appendChild(pill); }
- pill.classList.toggle("top",sheetOpen()); requestAnimationFrame(()=>bar.classList.add("on")); clearTimeout(BUSYTM); BUSYTM=setTimeout(()=>pill.classList.add("on"),350); }
+ pill.classList.toggle("top",sheetOpen()); requestAnimationFrame(()=>{ if(BUSYN>0) bar.classList.add("on"); }); clearTimeout(BUSYTM); BUSYTM=setTimeout(()=>{ if(BUSYN>0) pill.classList.add("on"); },350); }
 else { clearTimeout(BUSYTM); bar?.classList.remove("on"); pill?.classList.remove("on"); document.querySelectorAll(".is-busy").forEach(x=>x.classList.remove("is-busy")); }
 }
 const rawCall=call;
@@ -738,7 +738,7 @@ ${S.auth?.name==="아빠"?`<label class="chk"><input type="checkbox" id="momChk"
 <section class="group"><h2>${esc(kc.name)} 상벌 항목</h2><div class="card">`;
 for(const r of rules){
 if(S.editRule===r.id){
-h += `<div class="edrow"><input class="inp" id="eLabel" value="${esc(r.label)}" aria-label="항목 이름"><input class="inp num" id="eAmt" type="number" inputmode="numeric" step="500" value="${r.amount}" aria-label="금액(벌점은 음수)">
+h += `<div class="edrow"><input class="inp" id="eLabel" value="${esc(r.label)}" aria-label="항목 이름"><input class="inp num" id="eAmt" type="number" inputmode="numeric" step="500" value="${Math.abs(r.amount)}" aria-label="금액">
 <div class="acts"><label class="chk"><input type="checkbox" id="eIly" ${r.ily?"checked":""}> 일리 돌봄</label>
 <label class="chk"><input type="checkbox" id="eKid" ${r.kidOk?"checked":""}> 아이가 인증</label>
 <label class="chk"><input type="checkbox" id="ePhoto" ${r.photo!==false?"checked":""}> 사진 필수</label>
@@ -750,7 +750,7 @@ h += `<div class="row"><div class="main"><b>${esc(r.label)}</b>${tags?`<div clas
 }
 }
 if(!rules.length) h += `<div class="empty">항목이 없어요.</div>`;
-h += `</div><p class="note">벌점 항목은 금액을 음수로 적어요(예: −500). "하루 0회"는 제한 없음이에요.</p></section>
+h += `</div><p class="note">금액은 숫자만 적어요. 상점·벌점은 그대로 유지돼요. "하루 0회"는 제한 없음이에요.</p></section>
 <section class="group"><h2>보너스·벌칙 (자동 계산)</h2><div class="card">${(S.config?.bonuses||[]).map(b=>{ const miss=b.type==="weeklyMiss";
 const v=miss?Math.abs(Number(b.amounts?.[k]??b.amount)||0):b.per?(Number(b.per)||0):(Number(b.amount)||0);
 const inp=`<input class="inp num mini" style="width:96px;display:inline-block${miss?";color:var(--minus)":""}" id="bAmt_${esc(b.id)}" type="number" inputmode="numeric" step="500" min="0" value="${v}" aria-label="${esc(b.label)} 금액">`;
@@ -996,7 +996,7 @@ try{ await navigator.clipboard.writeText(txt); toast("복사했어요: "+txt); }
 if(d.loadacc){ S.acc="loading"; render(); loadAccess(); return; }
 if(d.redit){ S.editRule=d.redit; render(); return; }
 if(d.rcancel){ S.editRule=null; render(); return; }
-if(d.rsave){ const label=$("eLabel").value.trim(); const amt=Math.round(Number($("eAmt").value));
+if(d.rsave){ const label=$("eLabel").value.trim(); const old=(S.config?.kids?.[curKid()]?.rules||[]).find(x=>x.id===d.rsave); const amt=(old&&old.amount<0?-1:1)*Math.abs(Math.round(Number($("eAmt").value)));
 if(!label||!amt){ toast("이름과 금액(0 제외)을 입력해 주세요"); return; }
 b.disabled=true; S.editRule=null;
 await act(call("saveRule",{kid:curKid(),rule:{id:d.rsave,label,amount:amt,ily:$("eIly").checked,kidOk:$("eKid").checked,photo:$("ePhoto").checked,max:Number($("eMax").value)||0}}),"수정했어요. 지난 기록의 금액은 그대로예요"); return; }
