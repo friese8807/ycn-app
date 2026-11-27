@@ -358,6 +358,8 @@ function pay_(req, me) {
   const row = [kid, month, true, today_(), Number(s.base) || 0, Number(s.plus) || 0, Number(s.minus) || 0, Number(s.bonus) || 0, Number(s.total) || 0, safe_(me.name, 20)];
   const l = ledger_().filter(function (x) { return x.kid === kid && x.month === month; })[0];
   if (l) sheet_('PAY').getRange(l._row, 1, 1, row.length).setValues([row]); else sheet_('PAY').appendRow(row);
+  pushTo_(settings_(), function (x) { return x.who === kid; }, Number(month.slice(5)) + '월 용돈 정산 💰',
+    (Number(s.total) || 0).toLocaleString('ko-KR') + '원 지급 완료 · ' + me.name + ' (기본 ' + (Number(s.base) || 0).toLocaleString('ko-KR') + '원, 상점 ' + won_(s.plus) + ', 벌점 ' + won_(-Math.abs(Number(s.minus) || 0)) + (Number(s.bonus) ? ', 보너스·벌칙 ' + won_(s.bonus) : '') + ')');
   return { paid: true };
 }
 function unpay_(req, me) {
