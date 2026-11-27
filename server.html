@@ -28,13 +28,14 @@ table{border-collapse:collapse;width:100%;font-size:14px} td{padding:6px 4px;bor
  * 이 스크립트는 '윤호, 채원이네 상벌 통장' 구글 시트에 붙어서(확장 프로그램 &gt; Apps Script) 동작합니다.
  * 배포: 배포 &gt; 새 배포 &gt; 유형 '웹 앱' &gt; 실행: 나 / 액세스: 모든 사용자
  */
-const SH = { SET: '설정', RULE: '규칙', LOG: '기록', PAY: '정산', ACC: '접속' };
+const SH = { SET: '설정', RULE: '규칙', LOG: '기록', PAY: '정산', ACC: '접속', PUSH: '알림' };
 const COLS = {
   SET: ['키', '값'],
   RULE: ['아이', 'id', '항목', '금액', '일리', '아이인증', '하루최대', '사진필수'],
   LOG: ['id', '아이', '날짜', '시각', '규칙id', '항목', '금액', '메모', '사진', '사진해시', '입력', '상태', '반려사유', '기록자', '검토자', '검토시각'],
   PAY: ['아이', '월', '지급', '지급일', '기본', '상점', '벌점', '보너스', '지급액', '처리자'],
-  ACC: ['시각', '누구', '이름', '방식', '기기']
+  ACC: ['시각', '누구', '이름', '방식', '기기'],
+  PUSH: ['주소', '누구', '이름', '등록']
 };
 const KIDS = ['yunho', 'chaewon'];
 const PHOTO_KEYS = ['photo_yunho', 'photo_chaewon', 'photo_ily', 'photo_bg'];
@@ -212,11 +213,16 @@ function route_(req) {
   const a = String(req.action || '');
   if (a === 'boot') return { cfg: publicCfg_(st), today: today_() };
   if (a === 'image') return image_(req, st);
+  if (a === 'pushKey') return { key: vapid_(st).pub };
+  if (a === 'pushMsg') return { msg: popMsg_(req.endpoint) };
   const me = authorize_(req.auth, st);
   if (a === 'login' || a === 'load') logAccess_(req, me);
   if (a === 'login') return { role: me.role, name: me.name };
   if (a === 'load') return load_(String(req.month || ''), me, st);
   if (a === 'access') return access_(me);
+  if (a === 'pushSub') return pushSub_(req, me);
+  if (a === 'pushOff') { delPushRow_(String(req.endpoint || '')); return {}; }
+  if (a === 'pushTest') { pushTo_(st, function (x) { return x.endpoint === String(req.endpoint || ''); }, '알림이 잘 와요 🔔', me.name + ' 휴대폰에 알림이 켜져 있어요'); return {}; }
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
@@ -340,6 +346,7 @@ function addEntry_(req, me, st) {
   const id = Utilities.getUuid().replace(/-/g, '').slice(0, 10);
   sheet_('LOG').appendRow([id, kid, date, Date.now(), rule.id, safe_(rule.label, 60), rule.amount, safe_(req.memo, 200), photoId, hashv,
     asKid ? 'kid' : 'parent', asKid ? 'pending' : 'ok', '', safe_(me.name, 20), '', '']);
+  if (asKid) pushTo_(st, function (x) { return x.who === 'parent'; }, '인증 도착 📷', ka_(st, kid) + " '" + rule.label + "' 인증을 보냈어요 (" + won_(rule.amount) + ')');
   return { id: id, status: asKid ? 'pending' : 'ok' };
 }
 
@@ -354,6 +361,8 @@ function review_(req, me) {
   if (isPaid_(e.kid, e.date.slice(0, 7))) throw fail_('paid', '이미 정산이 끝난 달이에요');
   const ok = req.decision === 'ok';
   sheet_('LOG').getRange(e._row, 12, 1, 5).setValues([[ok ? 'ok' : 'rejected', ok ? '' : safe_(req.reason, 100), e.byName, safe_(me.name, 20), Date.now()]]);
+  if (e.src === 'kid') pushTo_(settings_(), function (x) { return x.who === e.kid; }, ok ? '인증 승인 🎉' : '인증 반려',
+    ok ? "'" + e.label + "' 인증이 승인됐어요 (" + won_(e.amount) + ')' : "'" + e.label + "' 인증이 반려됐어요" + (req.reason ? ' · ' + String(req.reason).slice(0, 60) : ''));
   return { id: e._id, status: ok ? 'ok' : 'rejected' };
 }
 function deleteEntry_(req, me) {
@@ -447,6 +456,93 @@ function setup() {
   const st = settings_();
   folder_(st);
   Logger.log('준비 완료. 이제 배포 &gt; 새 배포 &gt; 웹 앱으로 배포하세요.');
+}
+
+
+/* ---------- 알림 (웹 푸시) ----------
+ * 구글 서버는 암호화 기능이 없어 내용 없는 알림만 보내고, 휴대폰(sw.js)이 알림을 받으면 서버에서 문구(popMsg_)를 받아 띄운다.
+ * 알림 서명(VAPID, P-256)은 아래 함수가 직접 한다. 열쇠는 처음 한 번 만들어 설정 시트에 둔다. */
+function won_(n) { n = Number(n) || 0; return (n &gt; 0 ? '+' : n &lt; 0 ? '−' : '') + Math.abs(n).toLocaleString('ko-KR') + '원'; }
+function ka_(st, kid) { // '윤호가', '채원이가'
+  var n = String(st['name_' + kid] || kid); if (n.length === 3) n = n.slice(1);
+  var c = n.charCodeAt(n.length - 1) - 0xAC00; return n + (c &gt;= 0 &amp;&amp; c &lt; 11172 &amp;&amp; c % 28 ? '이가' : '가');
+}
+function b64u_(x) { return (typeof x === 'string' ? Utilities.base64EncodeWebSafe(x, Utilities.Charset.UTF_8) : Utilities.base64EncodeWebSafe(x)).replace(/=+$/, ''); }
+function sha_(x) { return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, x); }
+function big_(bytes) { var h = '0x0'; bytes.forEach(function (b) { h += ('0' + ((b + 256) % 256).toString(16)).slice(-2); }); return BigInt(h); }
+function bytes_(x, n) { var h = x.toString(16); while (h.length &lt; n * 2) h = '0' + h; var o = []; for (var i = 0; i &lt; n; i++) { var v = parseInt(h.substr(i * 2, 2), 16); o.push(v &gt; 127 ? v - 256 : v); } return o; }
+var EC_ = null;
+function ec_() {
+  if (!EC_) EC_ = { p: BigInt('0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff'), n: BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551'),
+    G: [BigInt('0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296'), BigInt('0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5')] };
+  return EC_;
+}
+function md_(a, m) { a = a % m; return a &lt; BigInt(0) ? a + m : a; }
+function inv_(a, m) { var t = BigInt(0), nt = BigInt(1), r = m, nr = md_(a, m), q, x; while (nr !== BigInt(0)) { q = r / nr; x = t - q * nt; t = nt; nt = x; x = r - q * nr; r = nr; nr = x; } return md_(t, m); }
+function ecAdd_(P, Q) {
+  if (!P) return Q; if (!Q) return P;
+  var p = ec_().p, l;
+  if (P[0] === Q[0]) { if (md_(P[1] + Q[1], p) === BigInt(0)) return null; l = md_(BigInt(3) * P[0] * P[0] - BigInt(3), p) * inv_(BigInt(2) * P[1], p) % p; }
+  else l = md_(Q[1] - P[1], p) * inv_(Q[0] - P[0], p) % p;
+  var x = md_(l * l - P[0] - Q[0], p);
+  return [x, md_(l * (P[0] - x) - P[1], p)];
+}
+function ecMul_(k, P) { var R = null; while (k &gt; BigInt(0)) { if (k % BigInt(2) === BigInt(1)) R = ecAdd_(R, P); P = ecAdd_(P, P); k = k / BigInt(2); } return R; }
+function rnd_(extra) { // 난수: 무작위 UUID 여러 개 + 추가 값을 SHA-256으로 섞는다
+  return big_(sha_(Utilities.getUuid() + Utilities.getUuid() + Utilities.getUuid() + String(extra || '') + Date.now()));
+}
+function vapid_(st) {
+  var d = String(st.vapidD || '').replace(/^k/, ''), pub = String(st.vapidPub || '').replace(/^k/, '');
+  if (!d || !pub) {
+    var n = ec_().n, D = md_(rnd_(), n - BigInt(1)) + BigInt(1), Q = ecMul_(D, ec_().G);
+    d = D.toString(16); pub = b64u_([4].concat(bytes_(Q[0], 32), bytes_(Q[1], 32)));
+    setSetting_('vapidD', 'k' + d); setSetting_('vapidPub', 'k' + pub);  // k = 시트가 숫자로 바꾸지 않게
+  }
+  return { d: BigInt('0x' + d), pub: pub };
+}
+function jwt_(v, aud) {
+  var msg = b64u_(JSON.stringify({ typ: 'JWT', alg: 'ES256' })) + '.' + b64u_(JSON.stringify({ aud: aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: 'https://friese8807.github.io/ycn-app/' }));
+  var c = ec_(), e = big_(sha_(msg)), r = BigInt(0), s = BigInt(0);
+  while (r === BigInt(0) || s === BigInt(0)) {
+    var k = md_(rnd_(v.d.toString(16) + msg), c.n - BigInt(1)) + BigInt(1);
+    r = md_(ecMul_(k, c.G)[0], c.n);
+    s = md_(inv_(k, c.n) * (e + r * v.d), c.n);
+  }
+  return msg + '.' + b64u_(bytes_(r, 32).concat(bytes_(s, 32)));
+}
+function pushRows_() { return values_('PUSH').map(function (x) { return { endpoint: String(x.r[0]), who: String(x.r[1]), row: x.row }; }); }
+function delPushRow_(ep) { var rows = pushRows_().filter(function (x) { return x.endpoint === ep; }); for (var i = rows.length - 1; i &gt;= 0; i--) sheet_('PUSH').deleteRow(rows[i].row); }
+function pushSub_(req, me) {
+  var ep = String(req.endpoint || '');
+  if (!/^https:\/\/[^\s]{10,900}$/.test(ep)) throw fail_('bad', '알림 주소가 올바르지 않아요');
+  delPushRow_(ep);
+  sheet_('PUSH').appendRow([ep, me.kid || 'parent', safe_(me.name, 20), Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm')]);
+  return {};
+}
+function msgKey_(ep) { return 'pm_' + big_(sha_(String(ep))).toString(16); }
+function popMsg_(ep) {
+  var c = CacheService.getScriptCache(), k = msgKey_(ep), list = [];
+  try { list = JSON.parse(c.get(k) || '[]'); } catch (e) { list = []; }
+  var m = list.shift() || null; c.put(k, JSON.stringify(list), 21600);
+  return m;
+}
+/** 조건(match)에 맞는 휴대폰마다 문구를 맡겨 두고 내용 없는 알림을 보낸다. 실패해도 본래 동작은 막지 않는다. */
+function pushTo_(st, match, title, body) {
+  try {
+    var targets = pushRows_().filter(match); if (!targets.length) return;
+    var v = vapid_(st), c = CacheService.getScriptCache(), gone = [];
+    targets.forEach(function (t) {
+      var k = msgKey_(t.endpoint), list = [];
+      try { list = JSON.parse(c.get(k) || '[]'); } catch (e) {}
+      list.push({ title: title, body: body }); c.put(k, JSON.stringify(list.slice(-5)), 21600);
+      var aud = t.endpoint.match(/^https:\/\/[^\/]+/)[0];
+      var res = UrlFetchApp.fetch(t.endpoint, { method: 'post', payload: '', muteHttpExceptions: true,
+        headers: { TTL: '86400', Urgency: 'high', Authorization: 'vapid t=' + jwt_(v, aud) + ', k=' + v.pub } });
+      var code = res.getResponseCode();
+      if (code === 404 || code === 410) gone.push(t.endpoint);
+    });
+    gone.forEach(delPushRow_);
+  } catch (e) { console.log('push 실패: ' + e); }
 }
 </pre></div>
 <div class="card"><h2>2. 붙여넣고 새 버전 배포</h2><ol>

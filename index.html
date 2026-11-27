@@ -238,7 +238,7 @@ padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:c
 .rule .cnt{top:4px;right:4px;min-width:18px;height:18px;font-size:10.5px;padding:0 5px}
 @media (min-width:520px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
-<script>(function(){var B="1795279518";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
+<script>(function(){var B="1795766460";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
 if(!/^[0-9]+$/.test(v)||v===B)return;try{if(sessionStorage.getItem("ycn-up")===v)return;sessionStorage.setItem("ycn-up",v)}catch(e){}
 location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
@@ -690,7 +690,59 @@ else h += `<p class="note">설정 탭에 ${esc(kidShort(k))} 계좌를 넣으면
 h += `<button class="btn ${ac?.no?"ghost":""}" data-pay="1" ${t.wn?"disabled":""}>${ac?.no?"송금했어요 · ":""}${krw(t.pay)} 지급 완료</button>
 <p class="note">${t.wn?"승인 대기 건을 먼저 승인하거나 반려해 주세요. ":""}${early?`정산일은 ${Number(S.month.slice(5,7))}월 ${last}일이에요. `:""}지급 완료하면 이 달 기록이 잠겨요.</p>`;
 }else h += `<p class="note">매달 말일에 부모님이 정산해서 지급해요.</p>`;
-$("view").innerHTML = h+`</div>`;
+$("view").innerHTML = h+`</div>`+(isKid()?pushHTML():"");
+}
+/* ---------- 알림 (웹 푸시) ---------- */
+const PUSH_OK = ()=>"serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const IOS = /iPhone|iPad/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints>1);
+const STANDALONE = (()=>{ try{ return !!navigator.standalone || matchMedia("(display-mode: standalone)").matches; }catch(e){ return false; } })();
+const meWho = ()=> S.auth?.who==="parent" ? (S.auth.name||"부모") : kidShort(S.auth?.who);
+async function pushCheck(){
+ let st="off";
+ if(!PUSH_OK()) st = IOS && !STANDALONE ? "home" : "no";
+ else if(Notification.permission==="denied") st="denied";
+ else { try{ const reg=await navigator.serviceWorker.getRegistration(); const sub=reg && await reg.pushManager.getSubscription(); if(sub && Notification.permission==="granted") st="on"; }catch(e){} }
+ S.push=st; bgRender();
+}
+function pushHTML(){
+ if(S.push===undefined){ S.push="loading"; pushCheck(); }
+ const kid=isKid(), owner=LS.get("ycn-push-who",""), me=meWho();
+ const what = kid ? "부모님이 인증을 승인하거나 반려하면 이 휴대폰으로 알려 줘요." : "아이가 인증을 보내면 이 휴대폰으로 알려 드려요.";
+ let body;
+ if(S.push==="loading") body=`<p class="note">확인하는 중…</p>`;
+ else if(S.push==="home") body=`<p class="note">사파리에서는 알림을 켤 수 없어요. 공유 버튼 → <b>홈 화면에 추가</b>로 연 앱에서 켜 주세요.</p>`;
+ else if(S.push==="no") body=`<p class="note">이 휴대폰(브라우저)은 알림을 지원하지 않아요. 아이폰은 iOS 16.4 이상이 필요해요.</p>`;
+ else if(S.push==="denied") body=`<p class="note">알림이 꺼져 있어요. 아이폰 <b>설정 → 알림 → 윤호채원</b>에서 허용한 뒤 다시 열어 주세요.</p>`;
+ else if(S.push==="on" && owner && owner!==me) body=`<p class="note">이 휴대폰은 지금 <b>${esc(owner)}</b> 알림을 받고 있어요.</p><div class="inline" style="justify-content:center"><button class="ib solid" data-pushon="1">${esc(me)} 알림으로 바꾸기</button><button class="ib" data-pushoff="1">알림 끄기</button></div>`;
+ else if(S.push==="on") body=`<p class="note">🔔 알림이 켜져 있어요. ${what}</p><div class="inline" style="justify-content:center"><button class="ib" data-pushtest="1">시험 알림 보내기</button><button class="ib" data-pushoff="1">알림 끄기</button></div>`;
+ else body=`<p class="note">${what}</p><button class="btn" data-pushon="1">🔔 알림 켜기</button>`;
+ return `<section class="group"><h2>알림</h2>${body}</section>`;
+}
+function b64u8(s){ s=s.replace(/-/g,"+").replace(/_/g,"/"); const r=atob(s+"===".slice((s.length+3)%4)); return Uint8Array.from(r,c=>c.charCodeAt(0)); }
+async function pushOn(){
+ const perm = await Notification.requestPermission();   // 누른 직후 바로 물어야 아이폰이 허용 창을 띄워요
+ if(perm!=="granted"){ toast("알림이 허용되지 않았어요"); S.push=undefined; render(); return; }
+ try{
+  const reg = await navigator.serviceWorker.register("sw.js"); await navigator.serviceWorker.ready;
+  const {key} = await call("pushKey");
+  let sub = await reg.pushManager.getSubscription();
+  if(sub && sub.options?.applicationServerKey && btoa(String.fromCharCode(...new Uint8Array(sub.options.applicationServerKey))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")!==key){ await sub.unsubscribe(); sub=null; }
+  if(!sub) sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64u8(key)});
+  await call("pushSub",{endpoint:sub.endpoint});
+  LS.set("ycn-push-who", meWho()); S.push="on"; render(); toast("알림을 켰어요");
+ }catch(e){ S.push=undefined; render(); onErr(e?.code?e:{message:"알림을 켜지 못했어요: "+(e?.message||e)}); }
+}
+async function pushOff(){
+ try{ const reg=await navigator.serviceWorker.getRegistration(); const sub=reg&&await reg.pushManager.getSubscription();
+  if(sub){ await call("pushOff",{endpoint:sub.endpoint}); await sub.unsubscribe(); }
+  LS.del("ycn-push-who"); S.push="off"; render(); toast("알림을 껐어요");
+ }catch(e){ onErr(e); }
+}
+async function pushTest(){
+ try{ const reg=await navigator.serviceWorker.getRegistration(); const sub=reg&&await reg.pushManager.getSubscription();
+  if(!sub){ S.push="off"; render(); return; }
+  await call("pushTest",{endpoint:sub.endpoint}); toast("보냈어요. 몇 초 안에 알림이 와요");
+ }catch(e){ onErr(e); }
 }
 function accessHTML(){
 if(S.acc===undefined){ S.acc="loading"; loadAccess(); }
@@ -773,6 +825,7 @@ return `<div style="padding:12px 14px;border-top:1px solid var(--line)${b.off?";
 <label class="chk"><input type="checkbox" id="nIly"> 일리를 돌보는 일이에요</label></div>
 <button class="btn" data-radd="1">${esc(kc.name)}에게 추가하기</button></div>
 <p class="note">벌점은 부모님만 기록할 수 있어요.</p></section>
+${pushHTML()}
 ${accessHTML()}
 <section class="group"><button class="btn ghost" data-logout="1">로그아웃 (${esc(S.auth?.name||"")})</button>
 <p class="note">기록은 구글 시트에 저장돼요. 시트에서 직접 고친 내용은 앱을 새로고침하면 반영돼요.</p></section></div>`;
@@ -992,6 +1045,9 @@ await refresh(true); return; }
 if(d.clearpin){ b.disabled=true; await act(call("setPin",{target:d.clearpin,pin:""}),"비밀번호를 없앴어요"); return; }
 if(d.copyacct){ const ac=S.config?.accounts?.[d.copyacct]; const t=totals(d.copyacct); const txt=`${ac.bank} ${ac.no} ${t.pay}`;
 try{ await navigator.clipboard.writeText(txt); toast("복사했어요: "+txt); }catch(e){ toast(txt); } return; }
+if(d.pushon){ pushOn(); return; }
+if(d.pushoff){ pushOff(); return; }
+if(d.pushtest){ pushTest(); return; }
 if(d.loadacc){ S.acc="loading"; render(); loadAccess(); return; }
 if(d.redit){ S.editRule=d.redit; render(); return; }
 if(d.rcancel){ S.editRule=null; render(); return; }
