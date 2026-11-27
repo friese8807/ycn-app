@@ -425,6 +425,11 @@ function setPhoto_(req, me, st) {
   return { id: id };
 }
 
+/** 알림을 쓰려면 편집기에서 이 함수를 한 번 실행해 '외부 연결' 권한을 허용하세요. */
+function allowPush() {
+  UrlFetchApp.fetch('https://web.push.apple.com/', { muteHttpExceptions: true });
+  Logger.log('알림 권한이 허용돼 있어요. 이제 앱에서 시험 알림을 보내 보세요.');
+}
 /** 처음 한 번 편집기에서 실행해 권한(시트·드라이브)을 허용하세요. */
 function setup() {
   ['SET', 'RULE', 'LOG', 'PAY'].forEach(sheet_);
