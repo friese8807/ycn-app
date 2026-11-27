@@ -322,6 +322,8 @@ function addEntry_(req, me, st) {
   sheet_('LOG').appendRow([id, kid, date, Date.now(), rule.id, safe_(rule.label, 60), rule.amount, safe_(req.memo, 200), photoId, hashv,
     asKid ? 'kid' : 'parent', asKid ? 'pending' : 'ok', '', safe_(me.name, 20), '', '']);
   if (asKid) pushTo_(st, function (x) { return x.who === 'parent'; }, '인증 도착 📷', ka_(st, kid) + " '" + rule.label + "' 인증을 보냈어요 (" + won_(rule.amount) + ')');
+  else pushTo_(st, function (x) { return x.who === kid; }, rule.amount > 0 ? '상점 👍' : '벌점 👎',
+    "'" + rule.label + "' " + won_(rule.amount) + ' · ' + me.name + (date !== today_() ? ' (' + Number(date.slice(5, 7)) + '/' + Number(date.slice(8)) + ')' : ''));
   return { id: id, status: asKid ? 'pending' : 'ok' };
 }
 
