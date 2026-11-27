@@ -51,6 +51,8 @@ jobs:
           fi
           mkdir gas && cd gas && printf '{"scriptId":"%s"}' "$SCRIPT_ID" > .clasp.json
           $C pull                                  # 설정 파일(appsscript.json)은 서버 것 그대로
+          # 알림(웹 푸시)에 필요한 외부 연결 권한: 권한 목록이 적혀 있는 프로젝트면 빠진 것을 더한다
+          node -e "const fs=require('fs'),f='appsscript.json',j=JSON.parse(fs.readFileSync(f));const s='https://www.googleapis.com/auth/script.external_request';if(Array.isArray(j.oauthScopes)&&!j.oauthScopes.includes(s)){j.oauthScopes.push(s);fs.writeFileSync(f,JSON.stringify(j,null,2));console.log('::notice::권한 추가: external_request')}console.log('scopes',JSON.stringify(j.oauthScopes||'auto'),'runtime',j.runtimeVersion)"
           main=$( [ -f Code.js ] && echo Code.js || ls -S *.js 2>/dev/null | head -1 )
           [ -n "$main" ] || { echo "::error::서버 프로젝트에 코드 파일이 없어요"; exit 1; }
           # 2) 저장소에 서버 코드가 없으면 가져오기만
