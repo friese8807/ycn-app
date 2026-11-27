@@ -10,7 +10,7 @@ const COLS = {
   LOG: ['id', '아이', '날짜', '시각', '규칙id', '항목', '금액', '메모', '사진', '사진해시', '입력', '상태', '반려사유', '기록자', '검토자', '검토시각'],
   PAY: ['아이', '월', '지급', '지급일', '기본', '상점', '벌점', '보너스', '지급액', '처리자'],
   ACC: ['시각', '누구', '이름', '방식', '기기'],
-  PUSH: ['주소', '누구', '이름', '등록']
+  PUSH: ['주소', '누구', '이름', '등록', '마지막 결과']
 };
 const KIDS = ['yunho', 'chaewon'];
 const PHOTO_KEYS = ['photo_yunho', 'photo_chaewon', 'photo_ily', 'photo_bg'];
@@ -197,7 +197,7 @@ function route_(req) {
   if (a === 'access') return access_(me);
   if (a === 'pushSub') return pushSub_(req, me);
   if (a === 'pushOff') { delPushRow_(String(req.endpoint || '')); return {}; }
-  if (a === 'pushTest') { pushTo_(st, function (x) { return x.endpoint === String(req.endpoint || ''); }, '알림이 잘 와요 🔔', me.name + ' 휴대폰에 알림이 켜져 있어요'); return {}; }
+  if (a === 'pushTest') return { res: pushTo_(st, function (x) { return x.endpoint === String(req.endpoint || ''); }, '알림이 잘 와요 🔔', me.name + ' 휴대폰에 알림이 켜져 있어요') };
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
@@ -503,8 +503,9 @@ function popMsg_(ep) {
 }
 /** 조건(match)에 맞는 휴대폰마다 문구를 맡겨 두고 내용 없는 알림을 보낸다. 실패해도 본래 동작은 막지 않는다. */
 function pushTo_(st, match, title, body) {
+  var out = [], targets = [];
   try {
-    var targets = pushRows_().filter(match); if (!targets.length) return;
+    targets = pushRows_().filter(match); if (!targets.length) return ['등록된 휴대폰 없음'];
     var v = vapid_(st), c = CacheService.getScriptCache(), gone = [];
     targets.forEach(function (t) {
       var k = msgKey_(t.endpoint), list = [];
@@ -513,9 +514,12 @@ function pushTo_(st, match, title, body) {
       var aud = t.endpoint.match(/^https:\/\/[^\/]+/)[0];
       var res = UrlFetchApp.fetch(t.endpoint, { method: 'post', payload: '', muteHttpExceptions: true,
         headers: { TTL: '86400', Urgency: 'high', Authorization: 'vapid t=' + jwt_(v, aud) + ', k=' + v.pub } });
-      var code = res.getResponseCode();
+      var code = res.getResponseCode(), txt = code + ' ' + String(res.getContentText() || '').slice(0, 150);
+      out.push(txt); note_(t.row, txt);
       if (code === 404 || code === 410) gone.push(t.endpoint);
     });
     gone.forEach(delPushRow_);
-  } catch (e) { console.log('push 실패: ' + e); }
+  } catch (e) { out.push('오류 ' + e); if (targets[0]) note_(targets[0].row, '오류 ' + e); }
+  return out;
 }
+function note_(row, txt) { try { sheet_('PUSH').getRange(row, 5).setValue(Utilities.formatDate(new Date(), tz_(), 'MM-dd HH:mm') + ' ' + txt); } catch (e) {} }

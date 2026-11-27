@@ -238,7 +238,7 @@ padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:c
 .rule .cnt{top:4px;right:4px;min-width:18px;height:18px;font-size:10.5px;padding:0 5px}
 @media (min-width:520px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
-<script>(function(){var B="1795766460";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
+<script>(function(){var B="1795793844";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
 if(!/^[0-9]+$/.test(v)||v===B)return;try{if(sessionStorage.getItem("ycn-up")===v)return;sessionStorage.setItem("ycn-up",v)}catch(e){}
 location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
@@ -741,7 +741,7 @@ async function pushOff(){
 async function pushTest(){
  try{ const reg=await navigator.serviceWorker.getRegistration(); const sub=reg&&await reg.pushManager.getSubscription();
   if(!sub){ S.push="off"; render(); return; }
-  await call("pushTest",{endpoint:sub.endpoint}); toast("보냈어요. 몇 초 안에 알림이 와요");
+  const r=await call("pushTest",{endpoint:sub.endpoint}); const t=String((r?.res||[])[0]||""); toast(/^20[01]/.test(t)?"보냈어요. 몇 초 안에 알림이 와요":"보내지 못했어요: "+t);
  }catch(e){ onErr(e); }
 }
 function accessHTML(){
