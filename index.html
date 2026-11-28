@@ -238,7 +238,7 @@ padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:c
 .rule .cnt{top:4px;right:4px;min-width:18px;height:18px;font-size:10.5px;padding:0 5px}
 @media (min-width:520px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
-<script>(function(){var B="1795793844";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
+<script>(function(){var B="1795854749";function chk(){fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){v=(v||"").trim();
 if(!/^[0-9]+$/.test(v)||v===B)return;try{if(sessionStorage.getItem("ycn-up")===v)return;sessionStorage.setItem("ycn-up",v)}catch(e){}
 location.replace(location.pathname+"?v="+v+location.hash)}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
@@ -464,7 +464,8 @@ for(const mon of weeksOf(S.month)){
 const sun=addDays(mon,6); const n=all.filter(e=>e.date>=mon&&e.date<=sun).length;
 if(sun<TODAY){ judged++; if(n<min) missed++; } else if(mon<=TODAY) cur=n;
 }
-out.push({label:b.label,total:-missed*amt2,pen:true,note:`주 ${min}회 미만이면 주마다 ${won(-amt2)} · 지난 ${judged}주 중 미달 ${missed}주`+(cur!=null?` · 이번 주 ${cur}/${min}회`:"")});
+const waived=Math.min(missed, Number(b.waive?.[k+":"+S.month])||0);   // 부모가 면제해 준 주 수 (설정 bonuses 의 waive {"아이:월": 주수})
+out.push({label:b.label,total:-(missed-waived)*amt2,pen:true,note:`주 ${min}회 미만이면 주마다 ${won(-amt2)} · 지난 ${judged}주 중 미달 ${missed}주`+(waived?` · ${waived}주 면제`:"")+(cur!=null?` · 이번 주 ${cur}/${min}회`:"")});
 }
 }
 return out;
